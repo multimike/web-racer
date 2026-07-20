@@ -7,10 +7,10 @@ import { applyDeadzone, clamp } from './deadzone';
  * connected over Bluetooth/USB. Uses the "standard" mapping Chrome/Firefox/
  * Safari expose for the DS4: left stick = axes 0/1, right stick = axes 2/3.
  *
- * Dual-stick RC scheme: left stick steers, right stick throttles (push up to
- * go forward, pull down to reverse) — mirrors a real RC transmitter more than
- * a single-stick car game does, and matches the two-thumbstick layout we'll
- * reuse for XR motion controllers later.
+ * Trigger driving scheme: left stick steers, right trigger (R2) is the
+ * accelerator, left trigger (L2) is the brake (and reverse, once stopped —
+ * the vehicle decides which). Triggers are buttons 6/7 with an analog
+ * `.value` in the "standard" Gamepad API mapping.
  */
 export class DesktopGamepadInput implements InputProvider {
   readonly name = 'gamepad';
@@ -37,12 +37,20 @@ export class DesktopGamepadInput implements InputProvider {
     if (!pad) return ZERO_INTENT;
 
     const steering = applyDeadzone(pad.axes[0] ?? 0, this.deadzone);
-    // Stick Y is positive-down on the Gamepad API; invert so "up" is forward.
-    const throttle = applyDeadzone(-(pad.axes[3] ?? 0), this.deadzone);
+    // Triggers rest at 0 and are already unidirectional — just squelch the
+    // tiny at-rest noise some pads report instead of stick-style rescaling.
+    const throttle = this.triggerValue(pad.buttons[7]);
+    const brake = this.triggerValue(pad.buttons[6]);
 
     return {
-      throttle: clamp(throttle, -1, 1),
+      throttle: clamp(throttle, 0, 1),
       steering: clamp(steering, -1, 1),
+      brake: clamp(brake, 0, 1),
     };
+  }
+
+  private triggerValue(button: GamepadButton | undefined): number {
+    const v = button?.value ?? (button?.pressed ? 1 : 0);
+    return v < 0.02 ? 0 : v;
   }
 }

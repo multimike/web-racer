@@ -35,6 +35,12 @@ export interface RigidWheelTuning {
   reverseSpeedFactor: number;
   /** Torque pulling driven wheels toward zero spin when coasting, N·m. */
   coastTorque: number;
+  /** Peak brake torque per wheel (all four brake), N·m. */
+  maxBrakeTorque: number;
+  /** Chassis center of mass, local Y relative to chassis center, m. */
+  comHeight: number;
+  /** Chassis center of mass, local Z (+ = toward the nose), m. */
+  comForward: number;
   /** Max steering angle at standstill, rad. */
   maxSteerAngle: number;
   /** How much steering tightens down with speed (per m/s). */
@@ -56,27 +62,23 @@ export const DEFAULT_RIGID_TUNING: RigidWheelTuning = {
   wheelRadius: 0.75,
   wheelWidth: 0.5,
   wheelMass: 50,
-  // Street-tire-on-asphalt μ; ground is 1.0 so the combined contact friction
-  // lands right at ~1.0.
-  wheelFriction: 1.0,
-  // ~1.2 Hz ride frequency (soft off-road): k = m·ω² ≈ 325 × 7.4² ≈ 18 kN/m,
-  // static sag ≈ 3.2 kN / 18 kN/m ≈ 0.18 m of travel.
-  suspensionStiffness: 18000,
-  // ζ ≈ 0.35: c = 2ζ√(k·m) ≈ 0.7 × √(18000 × 325) ≈ 1.7 kN·s/m.
-  suspensionDamping: 1700,
-  // Near the rear-tire traction limit (μ·N·r ≈ 1.0 × ~3.7 kN × 0.75 m ≈
-  // 2.8 kN·m): beyond it the extra torque only spins the tires. Gives
-  // 2 × 2500 / 0.75 ≈ 6.7 kN of drive ≈ 4.4 m/s² — brisk off-roader.
-  maxDriveTorque: 2500,
-  maxSpeed: 14,
+  wheelFriction: 2.0,           // Slightly more grip to handle the aggressive physics
+  suspensionStiffness: 85000,   // Jacked up from 25000 to resist high gravity
+  suspensionDamping: 4500,      // Increased to stop the car from bouncing like a toy
+  maxDriveTorque: 6000,         // Increased so it can propel the heavy-feeling car instantly
+  maxSpeed: 25,                 // Increased for a faster sense of speed
   reverseSpeedFactor: 0.5,
-  // Engine-braking scale torque.
-  coastTorque: 200,
-  maxSteerAngle: 0.6,
-  steerSpeedFalloff: 0.06,
-  steerGripMargin: 1.2,
-  steerResponse: 8,
-};
+  coastTorque: 500,             // More engine braking helps it feel grounded when letting off gas
+  maxBrakeTorque: 6000,         // Stronger brakes to match the speed
+  comHeight: -0.3,              // Lowered COM further to prevent flipping at high speeds
+  comForward: 0,
+  maxSteerAngle: 0.5,           // Slightly lower angle so it doesn't spin out instantly
+  steerSpeedFalloff: 0.04,
+  // The cap now uses REAL scene gravity (25, not a hard-coded 9.81), so 0.6
+  // here reproduces the same steering cap 1.5 gave against 9.81.
+  steerGripMargin: 0.6,
+  steerResponse: 12,            // Increased from 8 so the wheels snap to the stick faster
+}
 
 // Empirical sign flips for the constraint axis conventions (they depend on
 // which body is A vs B in the constraint). Verified by driving: positive
@@ -94,6 +96,7 @@ const ATTACH_Y = -0.5;
 interface WheelUnit {
   mesh: Mesh;
   body: PhysicsBody;
+  shape: PhysicsShapeCylinder;
   constraint: Physics6DoFConstraint;
   steered: boolean;
   driven: boolean;
@@ -109,16 +112,23 @@ interface WheelUnit {
  */
 export class RigidWheelVehicle implements Vehicle {
   readonly chassisMesh: Mesh;
+  /** Live tuning: torque/speed fields are read every frame, so mutating them
+   * takes effect immediately; COM and friction need applyCenterOfMass /
+   * applyWheelFriction after mutation. */
+  readonly tuning: RigidWheelTuning;
   private chassisBody: PhysicsBody;
   private input: InputProvider;
-  private tuning: RigidWheelTuning;
   private wheelUnits: WheelUnit[] = [];
   private steerAngle = 0;
   private linVel = new Vector3();
+  /** Scene gravity magnitude — grip scales with m·g, so the steering cap must too. */
+  private gravityMag: number;
 
   constructor(scene: Scene, input: InputProvider, tuning: RigidWheelTuning = DEFAULT_RIGID_TUNING) {
     this.input = input;
-    this.tuning = tuning;
+    // Clone so slider tweaks on this instance never bleed into the shared default.
+    this.tuning = { ...tuning };
+    this.gravityMag = scene.getPhysicsEngine()?.gravity.length() ?? 9.81;
 
     // --- Chassis (blue, to tell the models apart at a glance) ---
     const chassis = MeshBuilder.CreateBox('car', { width: 1.4, height: 0.6, depth: 2.4 }, scene);
@@ -135,7 +145,7 @@ export class RigidWheelVehicle implements Vehicle {
       scene,
     );
     this.chassisBody = chassisAggregate.body;
-    this.chassisBody.setMassProperties({ mass: 1300, centerOfMass: new Vector3(0, -0.15, 0) });
+    this.applyCenterOfMass();
     // Token aero/driveline losses only — yaw damping is the tires' job.
     this.chassisBody.setAngularDamping(0.1);
     this.chassisBody.setLinearDamping(0.02);
@@ -155,7 +165,7 @@ export class RigidWheelVehicle implements Vehicle {
 
       const mesh = MeshBuilder.CreateCylinder(
         `rigidWheel${i}`,
-        { diameter: t.wheelRadius * 2, height: t.wheelWidth, tessellation: 24 },
+        { diameter: t.wheelRadius * 2, height: t.wheelWidth, tessellation: 4 },
         scene,
       );
       // Cylinder is built along Y; bake a 90° roll so its local axis is X
@@ -196,7 +206,10 @@ export class RigidWheelVehicle implements Vehicle {
           // range must be non-zero — min=max=0 makes the plugin hard-LOCK the
           // axis and Havok then ignores stiffness/damping entirely (verified:
           // zero sag under load). A hair-width LIMITED range keeps the soft
-          // spring engaged on both sides of the mount point.
+          // spring engaged on both sides of the mount point. It must ALSO
+          // stay hair-width: stiffness/damping only act PAST a limit, so any
+          // real range here is free fall before the spring engages (±0.5
+          // measurably sank the ride height 0.6 m), not suspension travel.
           {
             axis: PhysicsConstraintAxis.LINEAR_Y,
             minLimit: -0.01,
@@ -222,18 +235,34 @@ export class RigidWheelVehicle implements Vehicle {
       // each frame (see update) — a hard kinematic hold. A POSITION motor was
       // tried first: its default gains are too soft for a fast-spinning
       // wheel and it shimmied violently between the limit stops.
-      if (cfg.driven) {
-        constraint.setAxisMotorType(PhysicsConstraintAxis.ANGULAR_X, PhysicsConstraintMotorType.VELOCITY);
-        constraint.setAxisMotorMaxForce(PhysicsConstraintAxis.ANGULAR_X, t.coastTorque);
-        constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
-      }
+      // Every wheel gets an axle VELOCITY motor: driven wheels use it for
+      // drive + coast, undriven fronts sit at zero force until the brakes
+      // clamp all four (target 0, force = brake torque).
+      constraint.setAxisMotorType(PhysicsConstraintAxis.ANGULAR_X, PhysicsConstraintMotorType.VELOCITY);
+      constraint.setAxisMotorMaxForce(PhysicsConstraintAxis.ANGULAR_X, cfg.driven ? t.coastTorque : 0);
+      constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
 
-      this.wheelUnits.push({ mesh, body: aggregate.body, constraint, steered: cfg.steered, driven: cfg.driven });
+      this.wheelUnits.push({ mesh, body: aggregate.body, shape, constraint, steered: cfg.steered, driven: cfg.driven });
     });
   }
 
   get currentSteerAngle(): number {
     return this.steerAngle;
+  }
+
+  /** Push tuning.comHeight/comForward into the chassis body. */
+  applyCenterOfMass(): void {
+    this.chassisBody.setMassProperties({
+      mass: 1300,
+      centerOfMass: new Vector3(0, this.tuning.comHeight, this.tuning.comForward),
+    });
+  }
+
+  /** Push tuning.wheelFriction into the wheel colliders (new contacts pick it up). */
+  applyWheelFriction(): void {
+    for (const wheel of this.wheelUnits) {
+      wheel.shape.material = { friction: this.tuning.wheelFriction, restitution: 0 };
+    }
   }
 
   update(dt: number): void {
@@ -253,10 +282,19 @@ export class RigidWheelVehicle implements Vehicle {
     // spin.
     const planarSq = this.linVel.x * this.linVel.x + this.linVel.z * this.linVel.z;
     const gripSteer = Math.atan(
-      (t.steerGripMargin * t.wheelFriction * 9.81 * 2 * WHEEL_Z) / Math.max(planarSq, 0.01),
+      (t.steerGripMargin * t.wheelFriction * this.gravityMag * 2 * WHEEL_Z) / Math.max(planarSq, 0.01),
     );
     const targetSteer = intent.steering * Math.min(t.maxSteerAngle * speedScale, gripSteer);
     this.steerAngle += clamp(targetSteer - this.steerAngle, -t.steerResponse * dt, t.steerResponse * dt);
+
+    // Brake pedal (left trigger / S): while rolling forward it clamps all
+    // four wheels toward zero spin; once (nearly) stopped and off the
+    // accelerator it becomes reverse throttle — the standard arcade scheme.
+    const reversing = intent.brake > 0.01 && forwardSpeed < 0.5 && intent.throttle <= 0.01;
+    const braking = intent.brake > 0.01 && !reversing;
+    // Signed drive command: the driven-wheel motor code below is direction-
+    // agnostic, so reverse is just negative throttle to it.
+    const drive = reversing ? -intent.brake : braking ? 0 : intent.throttle;
 
     for (const wheel of this.wheelUnits) {
       if (wheel.steered) {
@@ -266,29 +304,32 @@ export class RigidWheelVehicle implements Vehicle {
         wheel.constraint.setAxisMinLimit(PhysicsConstraintAxis.ANGULAR_Y, steer);
         wheel.constraint.setAxisMaxLimit(PhysicsConstraintAxis.ANGULAR_Y, steer);
       }
-      if (wheel.driven) {
-        if (Math.abs(intent.throttle) > 0.01) {
-          const speedCap = intent.throttle > 0 ? t.maxSpeed : t.maxSpeed * t.reverseSpeedFactor;
-          // Throttle commands TORQUE (tapering to zero at the speed cap), not
-          // a wheel-speed servo: a velocity target below the current rolling
-          // speed (any partial throttle at speed) would BRAKE the rears with
-          // the full maxDriveTorque, spending the whole rear friction budget
-          // longitudinally — that was the high-speed spin. The motor target is
-          // always the cap; the force limit is the throttle-scaled, tapered
-          // torque, so the motor only ever pushes toward the cap, never
-          // servo-brakes below it. (Taper > 1 when reversing against forward
-          // motion = braking.)
-          const targetOmega = (DRIVE_SIGN * Math.sign(intent.throttle) * speedCap) / t.wheelRadius;
-          const taper = clamp(1 - (forwardSpeed / speedCap) * Math.sign(intent.throttle), 0, 1.5);
+      if (braking) {
+        // Brake = velocity motor holding zero spin with the brake-scaled
+        // force budget. This is the one place a target-below-rolling-speed
+        // motor is CORRECT: spending the friction budget longitudinally is
+        // exactly what a brake is for.
+        wheel.constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
+        wheel.constraint.setAxisMotorMaxForce(
+          PhysicsConstraintAxis.ANGULAR_X,
+          intent.brake * t.maxBrakeTorque,
+        );
+      } else if (wheel.driven) {
+        if (Math.abs(drive) > 0.01) {
+          const speedCap = drive > 0 ? t.maxSpeed : t.maxSpeed * t.reverseSpeedFactor;
+          const targetOmega = (DRIVE_SIGN * Math.sign(drive) * speedCap) / t.wheelRadius;
           wheel.constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, targetOmega);
           wheel.constraint.setAxisMotorMaxForce(
             PhysicsConstraintAxis.ANGULAR_X,
-            Math.abs(intent.throttle) * t.maxDriveTorque * taper,
+            Math.abs(drive) * t.maxDriveTorque,
           );
         } else {
           wheel.constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
           wheel.constraint.setAxisMotorMaxForce(PhysicsConstraintAxis.ANGULAR_X, t.coastTorque);
         }
+      } else {
+        // Undriven front wheel, brakes released: leave the axle free.
+        wheel.constraint.setAxisMotorMaxForce(PhysicsConstraintAxis.ANGULAR_X, 0);
       }
     }
   }

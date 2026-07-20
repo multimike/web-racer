@@ -17,15 +17,23 @@ DualShock 4 or keyboard; XR support is not wired up yet.
 ## Architecture
 
 - `src/input/` — input abstraction: game code consumes a `CarIntent`
-  ({throttle, steering} in [-1,1]) from an `InputProvider`. Providers:
-  DualShock/gamepad, keyboard (WASD/arrows), composite (strongest signal
-  wins). An XR thumbstick provider slots in later without touching game code.
+  ({throttle 0..1, steering −1..1, brake 0..1}) from an `InputProvider`.
+  Providers: DualShock/gamepad (left stick steers, R2 = throttle, L2 =
+  brake — triggers are buttons 6/7 `.value` in the standard mapping),
+  keyboard (WASD/arrows; S/Down = brake), composite (strongest signal wins).
+  Brake-at-standstill = reverse; that decision lives in the VEHICLE
+  (RigidWheelVehicle.update), not the providers. An XR provider slots in
+  later without touching game code.
 - `src/car/` — ONE vehicle model behind the `Vehicle` interface:
   `RigidWheelVehicle` (blue car): 4 real cylinder wheel colliders joined to
   the chassis by 6DoF constraints — vertical axis = damped spring
   (suspension), axle = velocity motor driven in torque mode (see gotchas),
   steering = per-frame clamping of the yaw-axis limits (kinematic hold). Grip
-  comes from Havok contact friction. (A raycast-suspension alternative with
+  comes from Havok contact friction. All four wheels carry a velocity motor:
+  rears drive/coast, fronts sit at zero force until braking (brake = target 0,
+  force = brake × maxBrakeTorque on all four — the one legitimate use of a
+  below-rolling-speed velocity target). Holding brake at (near) standstill
+  reverses. (A raycast-suspension alternative with
   explicit tire forces existed for A/B comparison and was removed 2026-07 by
   user decision — recover from git history if the rigid model's Havok grip
   limitation at real scale ever forces a hybrid.)
@@ -61,6 +69,13 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   Scene look (createScene.ts): warm DirectionalLight along `SUN_DIR` + cool
   hemispheric fill, sky-blue clearColor, EXP2 fog, blob shadow disc following
   the car at `Heightfield.getHeight` (no shadow maps anywhere).
+- `src/ui/TuningPanel.ts` — DOM overlay (top right): sliders bound live to
+  `car.tuning` (CoM height/fore-aft and tire friction call
+  `applyCenterOfMass`/`applyWheelFriction` to push into Havok; torque and
+  max speed are read every frame anyway) + throttle/brake pedal bars fed
+  from `input.poll()` per frame. The vehicle clones DEFAULT_RIGID_TUNING so
+  slider tweaks never mutate the shared default — good numbers found by
+  feel-testing must be copied back into RigidWheelVehicle.ts by hand.
 - `window.__game` exposed in dev builds for console poking
   ({engine, scene, car, terrain, view}).
 

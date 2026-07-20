@@ -52,7 +52,7 @@ export async function createScene(
   const scene = new Scene(engine);
 
   const havokInstance = await HavokPhysics();
-  scene.enablePhysics(new Vector3(0, -9.81, 0), new HavokPlugin(true, havokInstance));
+  scene.enablePhysics(new Vector3(0, -25, 0), new HavokPlugin(true, havokInstance));
 
   // Sky + fog: warm light blue backdrop the rim melts into instead of black
   // void. Standard materials use scene fog; the terrain shader reads the same

@@ -3,6 +3,8 @@ import type { TerrainMode, ViewMode } from './scene/createScene';
 import { CompositeInput } from './input/CompositeInput';
 import { DesktopGamepadInput } from './input/DesktopGamepadInput';
 import { KeyboardInput } from './input/KeyboardInput';
+import { RigidWheelVehicle } from './car/RigidWheelVehicle';
+import { createTuningPanel } from './ui/TuningPanel';
 
 const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement;
 
@@ -33,6 +35,9 @@ document.body.appendChild(hud);
 const input = new CompositeInput([new DesktopGamepadInput(), new KeyboardInput()]);
 
 createScene(canvas, input, terrain, seed, view).then((game) => {
+  if (game.car instanceof RigidWheelVehicle) {
+    createTuningPanel(game.scene, game.car, input);
+  }
   if (import.meta.env.DEV) {
     // Handy for the Babylon Inspector / console poking during development.
     (window as unknown as { __game: typeof game }).__game = game;

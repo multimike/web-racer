@@ -26,7 +26,7 @@ export class CompositeInput implements InputProvider {
     for (const provider of this.providers) {
       if (!provider.isActive()) continue;
       const intent = provider.poll();
-      const magnitude = Math.abs(intent.throttle) + Math.abs(intent.steering);
+      const magnitude = Math.abs(intent.throttle) + Math.abs(intent.steering) + Math.abs(intent.brake);
       if (magnitude > bestMagnitude) {
         bestMagnitude = magnitude;
         best = intent;

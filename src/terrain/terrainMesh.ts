@@ -98,7 +98,7 @@ export function createTerrain(scene: Scene, seed: number): Terrain {
     hf.toBabylonHeightFieldData(),
     scene,
   );
-  shape.material = { friction: 1.0, restitution: 0 };
+  shape.material = { friction: 2.0, restitution: 0 };
   const body = new PhysicsBody(mesh, PhysicsMotionType.STATIC, false, scene);
   body.shape = shape;
   data.timings.physics = performance.now() - t0;
