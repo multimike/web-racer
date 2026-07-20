@@ -8,13 +8,25 @@ export interface TerrainData {
   track: Track;
   /** Per-sample splat weights, RGBA per vertex (grass, rock, dirt road, meadow), sums to 1. */
   splat: Float32Array;
-  /** Per-sample ambient occlusion in [0, 1]. */
-  ao: Float32Array;
+  /** Per-sample shading, 3 floats per vertex: [ambient occlusion, baked sun
+   * visibility (terrain self-shadow), albedo tint (road-edge outline)]. */
+  shade: Float32Array;
   timings: Record<string, number>;
 }
 
 export const TERRAIN_SAMPLES = 256;
 export const TERRAIN_SIZE = 200;
+
+/** Direction TOWARD the sun (normalized). Low side angle (~46° elevation) so
+ * slopes get distinct toon bands even when viewed from above — a straight-down
+ * sun collapses the whole map into one band. Shared by the terrain shader,
+ * the baked shadow march below, and the scene's DirectionalLight. */
+export const SUN_DIR = normalize({ x: -0.5, y: 0.72, z: -0.48 });
+
+function normalize(v: { x: number; y: number; z: number }): { x: number; y: number; z: number } {
+  const l = Math.hypot(v.x, v.y, v.z);
+  return { x: v.x / l, y: v.y / l, z: v.z / l };
+}
 
 /** Pure CPU-side generation: heights + track carve + splat + AO. No Babylon
  * types in here so it can move to a worker (or run headless for tests) as is. */
@@ -65,7 +77,72 @@ export function generateTerrain(seed: number): TerrainData {
   const ao = buildAO(hf);
   timings.ao = performance.now() - t0;
 
-  return { heightfield: hf, track, splat, ao, timings };
+  t0 = performance.now();
+  const sunVis = buildSunVisibility(hf);
+  timings.sunShadow = performance.now() - t0;
+
+  const tint = buildEdgeTint(hf, track);
+
+  // Interleave into one vertex buffer: [ao, sunVis, tint] per sample.
+  const shade = new Float32Array(hf.n * hf.n * 3);
+  for (let i = 0; i < hf.n * hf.n; i++) {
+    shade[i * 3] = ao[i];
+    shade[i * 3 + 1] = sunVis[i];
+    shade[i * 3 + 2] = tint[i];
+  }
+
+  return { heightfield: hf, track, splat, shade, timings };
+}
+
+/** Baked terrain self-shadow: march toward the sun and compare the horizon
+ * angle against the sun elevation. Soft penumbra via smoothstep in tan space.
+ * Terrain is static, so this is real cast shadowing at zero runtime cost —
+ * no shadow map needed for the landscape. */
+function buildSunVisibility(hf: Heightfield): Float32Array {
+  const n = hf.n;
+  const half = hf.size / 2;
+  const out = new Float32Array(n * n);
+  const hLen = Math.hypot(SUN_DIR.x, SUN_DIR.z);
+  const sx = SUN_DIR.x / hLen;
+  const sz = SUN_DIR.z / hLen;
+  const tanElev = SUN_DIR.y / hLen;
+  // Log-spaced steps out to ~45 m: near steps catch crisp local shadows,
+  // far steps catch the long soft ones from the rim.
+  const steps: number[] = [];
+  for (let t = 1.2; t < 45; t *= 1.35) steps.push(t);
+  for (let iz = 0; iz < n; iz++) {
+    for (let ix = 0; ix < n; ix++) {
+      const wx = -half + ix * hf.step;
+      const wz = -half + iz * hf.step;
+      const h = hf.at(ix, iz);
+      let maxTan = 0;
+      for (const t of steps) {
+        // Small bias so a surface never shadows itself with its own bumps.
+        const tan = (hf.getHeight(wx + sx * t, wz + sz * t) - h - 0.1) / t;
+        if (tan > maxTan) maxTan = tan;
+      }
+      out[iz * n + ix] = 1 - 0.85 * smoothstep(tanElev * 0.9, tanElev * 1.35, maxTan);
+    }
+  }
+  return out;
+}
+
+/** Darker band straddling the road border — reads as a drawn outline, turning
+ * the fuzzy tan smear into a deliberate toy road. */
+function buildEdgeTint(hf: Heightfield, track: Track): Float32Array {
+  const n = hf.n;
+  const out = new Float32Array(n * n).fill(1);
+  const roadDist = track.sampleRoadDist!;
+  const hw = track.halfWidth;
+  for (let i = 0; i < n * n; i++) {
+    const d = roadDist[i];
+    if (!Number.isFinite(d)) continue;
+    // Transitions ≥ 2 heightmap samples (~1.6 m) wide, or the band aliases
+    // into stair-steps along diagonal road sections.
+    const edge = smoothstep(hw - 1.8, hw - 0.2, d) * (1 - smoothstep(hw + 0.3, hw + 2.0, d));
+    out[i] = 1 - 0.18 * edge;
+  }
+  return out;
 }
 
 /** Distance-field carve: flatten toward the smoothed road profile inside

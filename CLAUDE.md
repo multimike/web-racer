@@ -53,14 +53,20 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   rotated so point 0 = world origin heading +z = spawn; road elevation =
   circularly low-pass-filtered terrain) → `generateTerrain.ts` (base FBM +
   containment rim bowl [no walls in hills mode], bucket-grid distance-field
-  carve, RGBA splat weights grass/rock/dirt/meadow, multi-scale cavity AO) →
+  carve, RGBA splat weights grass/rock/dirt/meadow, multi-scale cavity AO,
+  baked sun-shadow horizon march along `SUN_DIR`, road-edge outline tint) →
   `terrainMesh.ts` (single frozen 130k-tri mesh, one draw call, Uint32
-  indices, custom `ao` vertex buffer, Havok HEIGHTFIELD body on the same
-  transform, dev-mode raycast verification + timings in console) +
-  `TerrainMaterial.ts` (ShaderMaterial: palette × splat, 3-band toon N·L,
-  AO on ambient, height tint, fragment hash-noise macro variation — no
-  textures; tiling textures multiply into the same weights later).
-  Whole generation ~55 ms.
+  indices, custom `shade` vertex buffer [AO, sun visibility, albedo tint],
+  Havok HEIGHTFIELD body on the same transform, dev-mode raycast verification
+  + timings in console) + `TerrainMaterial.ts` (ShaderMaterial: palette ×
+  splat, quantized grass patchwork, 4-band toon N·L × baked shadow, AO on
+  ambient, height tint, manual EXP2 fog matching scene fog — no textures;
+  tiling textures multiply into the same weights later; `mesh.applyFog =
+  false` or Babylon injects clashing FOG code; "patch" is a GLSL ES 3.00
+  reserved word). Whole generation ~70 ms.
+  Scene look (createScene.ts): warm DirectionalLight along `SUN_DIR` + cool
+  hemispheric fill, sky-blue clearColor, EXP2 fog, blob shadow disc following
+  the car at `Heightfield.getHeight` (no shadow maps anywhere).
 - `window.__game` exposed in dev builds for console poking
   ({engine, scene, car, mode}).
 

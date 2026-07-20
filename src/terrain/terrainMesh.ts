@@ -79,11 +79,14 @@ export function createTerrain(scene: Scene, seed: number): Terrain {
   vertexData.colors = colors;
   vertexData.indices = indices;
   vertexData.applyToMesh(mesh, false);
-  mesh.setVerticesBuffer(new VertexBuffer(scene.getEngine(), data.ao, 'ao', false, false, 1));
+  mesh.setVerticesBuffer(new VertexBuffer(scene.getEngine(), data.shade, 'shade', false, false, 3));
   mesh.material = createTerrainMaterial(scene);
   mesh.position.set(0, 0, 0);
   mesh.isPickable = false;
   mesh.alwaysSelectAsActiveMesh = true; // always on screen — skip frustum test
+  // Fog is done manually in the terrain shader; without this Babylon injects
+  // its own FOG define/uniforms into the ShaderMaterial and the mix clashes.
+  mesh.applyFog = false;
   data.timings.mesh = performance.now() - t0;
 
   t0 = performance.now();

@@ -13,20 +13,22 @@ import {
 } from '@babylonjs/core';
 import type { Scene } from '@babylonjs/core/scene';
 import { createTerrain } from '../terrain/terrainMesh';
+import type { Terrain } from '../terrain/terrainMesh';
 import type { Track } from '../terrain/track';
 
 export type TerrainMode = 'flat' | 'hills';
 
 /** Static world. `hills`: procedural heightfield with a carved dirt-road loop
  * (rim hills contain the car — no walls). `flat`: the original checkered
- * arena with walls, ramps, and the wavy road. */
-export function buildEnvironment(scene: Scene, terrain: TerrainMode, seed: number): void {
+ * arena with walls, ramps, and the wavy road. Returns the terrain (null in
+ * flat mode) so the scene can query ground height, e.g. for blob shadows. */
+export function buildEnvironment(scene: Scene, terrain: TerrainMode, seed: number): Terrain | null {
   if (terrain === 'hills') {
-    const { track } = createTerrain(scene, seed);
+    const built = createTerrain(scene, seed);
     // Two jump ramps sitting on the road, aligned with the driving direction.
-    placeRampOnRoad(scene, track, 0.35, 12);
-    placeRampOnRoad(scene, track, 0.7, 18);
-    return;
+    placeRampOnRoad(scene, built.track, 0.35, 12);
+    placeRampOnRoad(scene, built.track, 0.7, 18);
+    return built;
   }
   buildGround(scene);
   buildWalls(scene);
@@ -35,6 +37,7 @@ export function buildEnvironment(scene: Scene, terrain: TerrainMode, seed: numbe
   buildRamp(scene, new Vector3(10, 0, 25), 18);
   buildRamp(scene, new Vector3(20, 0, 25), 25);
   buildWavyRoad(scene, new Vector3(-10, 0, 20));
+  return null;
 }
 
 /** Drop a ramp onto the carved road at `fraction` around the loop, entry edge
