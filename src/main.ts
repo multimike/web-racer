@@ -1,26 +1,41 @@
 import { createScene } from './scene/createScene';
-import type { VehicleMode } from './scene/createScene';
+import type { TerrainMode, VehicleMode, ViewMode } from './scene/createScene';
 import { CompositeInput } from './input/CompositeInput';
 import { DesktopGamepadInput } from './input/DesktopGamepadInput';
 import { KeyboardInput } from './input/KeyboardInput';
 
 const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement;
 
-const mode: VehicleMode =
-  new URLSearchParams(location.search).get('vehicle') === 'rigid' ? 'rigid' : 'raycast';
+const params = new URLSearchParams(location.search);
+const mode: VehicleMode = params.get('vehicle') === 'rigid' ? 'rigid' : 'raycast';
+const terrain: TerrainMode = params.get('terrain') === 'flat' ? 'flat' : 'hills';
+const seed = Number.parseInt(params.get('seed') ?? '', 10) || 1;
+const view: ViewMode = params.get('view') === 'xr' ? 'xr' : 'chase';
 
-// Small overlay showing which vehicle model is active, with a link to the other.
-const other: VehicleMode = mode === 'rigid' ? 'raycast' : 'rigid';
+// A/B links that flip one param and keep the rest.
+function linkWith(overrides: Record<string, string>): string {
+  const p = new URLSearchParams(location.search);
+  for (const [k, v] of Object.entries(overrides)) p.set(k, v);
+  return `?${p.toString()}`;
+}
+
+const otherMode: VehicleMode = mode === 'rigid' ? 'raycast' : 'rigid';
+const otherTerrain: TerrainMode = terrain === 'hills' ? 'flat' : 'hills';
+const otherView: ViewMode = view === 'xr' ? 'chase' : 'xr';
 const hud = document.createElement('div');
 hud.style.cssText =
   'position:fixed;top:10px;left:10px;z-index:10;color:#fff;font:13px monospace;' +
   'background:rgba(0,0,0,0.55);padding:6px 10px;border-radius:4px;';
-hud.innerHTML = `vehicle: <b>${mode}</b> &nbsp;|&nbsp; <a href="?vehicle=${other}" style="color:#8cf">switch to ${other}</a>`;
+hud.innerHTML =
+  `vehicle: <b>${mode}</b> <a href="${linkWith({ vehicle: otherMode })}" style="color:#8cf">switch</a>` +
+  ` &nbsp;|&nbsp; terrain: <b>${terrain}</b> <a href="${linkWith({ terrain: otherTerrain })}" style="color:#8cf">switch</a>` +
+  ` &nbsp;|&nbsp; seed: <b>${seed}</b> <a href="${linkWith({ seed: String(seed + 1) })}" style="color:#8cf">next</a>` +
+  ` &nbsp;|&nbsp; view: <b>${view}</b> <a href="${linkWith({ view: otherView })}" style="color:#8cf">switch</a>`;
 document.body.appendChild(hud);
 
 const input = new CompositeInput([new DesktopGamepadInput(), new KeyboardInput()]);
 
-createScene(canvas, input, mode).then((game) => {
+createScene(canvas, input, mode, terrain, seed, view).then((game) => {
   if (import.meta.env.DEV) {
     // Handy for the Babylon Inspector / console poking during development.
     (window as unknown as { __game: typeof game }).__game = game;
