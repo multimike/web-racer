@@ -15,7 +15,6 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import HavokPhysics from '@babylonjs/havok';
-import { createRaycastCar } from '../car/createRaycastCar';
 import { RigidWheelVehicle } from '../car/RigidWheelVehicle';
 import { buildEnvironment } from './environment';
 import type { TerrainMode } from './environment';
@@ -24,7 +23,6 @@ import type { Heightfield } from '../terrain/Heightfield';
 import type { Vehicle } from '../car/Vehicle';
 import type { InputProvider } from '../input/types';
 
-export type VehicleMode = 'raycast' | 'rigid';
 export type ViewMode = 'chase' | 'xr';
 export type { TerrainMode };
 
@@ -39,7 +37,6 @@ export interface GameScene {
   engine: Engine;
   scene: Scene;
   car: Vehicle;
-  mode: VehicleMode;
   terrain: TerrainMode;
   view: ViewMode;
 }
@@ -47,7 +44,6 @@ export interface GameScene {
 export async function createScene(
   canvas: HTMLCanvasElement,
   input: InputProvider,
-  mode: VehicleMode,
   terrain: TerrainMode,
   seed: number,
   view: ViewMode,
@@ -78,9 +74,7 @@ export async function createScene(
 
   const builtTerrain = buildEnvironment(scene, terrain, seed);
 
-  const car: Vehicle = mode === 'rigid'
-    ? new RigidWheelVehicle(scene, input)
-    : createRaycastCar(scene, input);
+  const car: Vehicle = new RigidWheelVehicle(scene, input);
 
   const shadow = createBlobShadow(scene);
 
@@ -105,10 +99,10 @@ export async function createScene(
   } else {
     const camera = new FollowCamera('chaseCam', car.chassisMesh.position.add(new Vector3(0, 6, -12)), scene);
     camera.lockedTarget = car.chassisMesh;
-    camera.radius = 12;
-    camera.heightOffset = 6;
+    camera.radius = 50;
+    camera.heightOffset = 20;
     camera.rotationOffset = 180;
-    camera.cameraAcceleration = 0.05;
+    camera.cameraAcceleration = 0.02;
     camera.maxCameraSpeed = 20;
     scene.activeCamera = camera;
   }
@@ -124,7 +118,7 @@ export async function createScene(
 
   window.addEventListener('resize', () => engine.resize());
 
-  return { engine, scene, car, mode, terrain, view };
+  return { engine, scene, car, terrain, view };
 }
 
 /** Soft dark disc that follows the car at ground height — grounds the car

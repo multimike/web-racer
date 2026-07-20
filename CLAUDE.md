@@ -20,21 +20,15 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   ({throttle, steering} in [-1,1]) from an `InputProvider`. Providers:
   DualShock/gamepad, keyboard (WASD/arrows), composite (strongest signal
   wins). An XR thumbstick provider slots in later without touching game code.
-- `src/car/` — TWO vehicle physics models behind a common `Vehicle` interface,
-  A/B selectable via URL `?vehicle=raycast|rigid` (HUD top-left shows active
-  model + switch link):
-  - `RaycastVehicle` (red car): chassis-only rigid body; per-wheel suspension
-    raycasts + spring/damper forces, slip-based lateral grip saturating at
-    μ×load, motor-taper drive, tilted "bumper" raycasts to stop against steep
-    obstacles. Wheels are cosmetic (`WheelVisuals`). Factory:
-    `createRaycastCar.ts`.
-  - `RigidWheelVehicle` (blue car): 4 real cylinder wheel colliders joined to
-    the chassis by 6DoF constraints — vertical axis = damped spring
-    (suspension), axle = velocity motor (drive), steering = per-frame clamping
-    of the yaw-axis limits (kinematic hold). Grip comes from Havok contact
-    friction.
-  - As of last evaluation the user prefers the rigid model ("close to very
-    good").
+- `src/car/` — ONE vehicle model behind the `Vehicle` interface:
+  `RigidWheelVehicle` (blue car): 4 real cylinder wheel colliders joined to
+  the chassis by 6DoF constraints — vertical axis = damped spring
+  (suspension), axle = velocity motor driven in torque mode (see gotchas),
+  steering = per-frame clamping of the yaw-axis limits (kinematic hold). Grip
+  comes from Havok contact friction. (A raycast-suspension alternative with
+  explicit tire forces existed for A/B comparison and was removed 2026-07 by
+  user decision — recover from git history if the rigid model's Havok grip
+  limitation at real scale ever forces a hybrid.)
 - `src/scene/` — `createScene.ts` (engine/physics/camera/loop),
   `environment.ts` (terrain-mode switch; flat: checkerboard ground, arena
   walls, 3 ramps, wavy road — all with explicit friction values). Camera A/B
@@ -68,7 +62,7 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   hemispheric fill, sky-blue clearColor, EXP2 fog, blob shadow disc following
   the car at `Heightfield.getHeight` (no shadow maps anywhere).
 - `window.__game` exposed in dev builds for console poking
-  ({engine, scene, car, mode}).
+  ({engine, scene, car, terrain, view}).
 
 ## Hard-won Havok/Babylon gotchas (do not rediscover these)
 
@@ -84,9 +78,41 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   target = forward roll, positive ANGULAR_Y = steer right.
 - Static bodies (`PhysicsAggregate`) default to low friction — always pass
   `friction` explicitly or tires won't grip.
-- Drive torque reaction can backflip the light chassis: keep
-  `maxDriveTorque` near the traction limit (see comment in
-  RigidWheelVehicle).
+- Keep `maxDriveTorque` near the tire traction limit μ·N·r (see comment in
+  RigidWheelVehicle): extra torque only spins the tires, and its reaction
+  pitches the chassis (backflipped the old 5 kg toy-mass chassis outright).
+- NEVER use a constraint VELOCITY motor as a throttle-scaled wheel-speed
+  servo: any partial throttle at speed puts the target below the current
+  rolling speed and the motor BRAKES the driven wheels with the full force
+  limit, spending the whole rear friction budget longitudinally → instant
+  spin. Throttle must command TORQUE (motor target = speed cap, force limit =
+  throttle × tapered torque) — see RigidWheelVehicle.update.
+- At real-scale masses (~1500 kg through 50 kg wheels) Havok's contact
+  friction on fast-ROLLING constraint-mounted cylinder wheels delivers only
+  ~40-50 % of μ·N laterally (solver convergence through the
+  chassis→constraint→wheel→ground chain; verified numerically: a pure
+  sideways slide stops at full μ·g ≈ 10 m/s², a rolling-straight lateral kick
+  also damps out, but steady cornering generates only ~4-5 m/s² centripetal
+  and diverges into a slide). Substepping (4/8/16 × per frame) does NOT fix
+  it and destabilizes straight-line running; raising μ to 2 makes it worse;
+  Babylon exposes no Havok solver-iteration API. Consequence: the rigid model
+  understeers/slides when pushed near the grip limit at speed — a KNOWN OPEN
+  LIMITATION, kept by user decision (the raycast model with explicit tire
+  forces cornered cleanly and is recoverable from git history; a hybrid —
+  rigid wheels for collision + explicit lateral force assist — is the likely
+  eventual fix).
+- Steering at speed must be capped by the grip circle (lateral accel
+  v²·tanδ/L ≤ margin × μ·g, `steerGripMargin`) or full stick at speed
+  commands 3× more lateral accel than tires deliver = the old high-speed
+  slide. Compute the cap from TOTAL planar speed, not forward speed —
+  forward speed collapses in a slide and a forward-speed cap winds steering
+  INTO the spin.
+- Test harnesses that step physics manually (pe._step) MUST call
+  mesh.computeWorldMatrix(true) each frame before vehicle.update — without
+  scene.render() the world-matrix cache goes stale and raycasts fire from
+  positions frames behind the body (the car appears to free-fall through the
+  ground / pogo-launch). Also nudge bodies after a settle phase: Havok puts
+  them to sleep and a sleeping body ignores the drive forces.
 - `DynamicTexture` defaults to CLAMP wrap mode — set `wrapU/wrapV` to
   WRAP_ADDRESSMODE before tiling with uScale/vScale > 1.
 - `MeshBuilder.CreateGround` needs `updatable: true` for vertex displacement.
@@ -106,8 +132,15 @@ DualShock 4 or keyboard; XR support is not wired up yet.
 
 ## Physics scale & tuning
 
-World units are meters at "RC scale": car chassis 1.4×0.6×2.4 m, mass 5 kg,
-wheels r=0.75 m (monster-truck proportions), speeds ~14 m/s. For the XR
+World units are meters at REAL scale: car chassis 1.4×0.6×2.4 m (~3.9 m over
+the wheels), wheels r=0.75 m (monster-truck proportions), ~1500 kg all-in
+(1300 kg chassis + 4×50 kg wheels), speeds ~14 m/s (≈50 km/h). All
+tuning values are physically real for that mass — suspension ~1.2 Hz ride
+frequency, drive torque near the tire traction limit, μ ≈ 1.0 — so sanity-
+check changes against real-vehicle numbers. Steering is capped by a
+grip-circle limit (commanded lateral accel ≤ steerGripMargin × μ·g) on top of
+the linear speed falloff; that cap is what stops terminal understeer/slide at
+high speed. For the XR
 diorama: do NOT scale the world or a render parent (Havok writes world-space
 transforms into meshes every frame and would fight a scaled parent). Instead
 counter-scale the PLAYER — parent the WebXR camera under a rig node scaled
@@ -119,7 +152,7 @@ leaning in doesn't clip. Known feel caveat: apparent gravity at diorama scale
 is 1/50th, so airborne cars look floaty/slow-motion (film-miniature effect);
 if that reads badly, speed up time/gravity (~√50 ≈ 7× rule of thumb) — a
 feel-test decision since it changes handling.
-Tuning objects: `DEFAULT_TUNING` (raycast), `DEFAULT_RIGID_TUNING` (rigid).
+Tuning object: `DEFAULT_RIGID_TUNING` in RigidWheelVehicle.ts.
 
 ## Next planned workstream
 
@@ -132,7 +165,7 @@ material, `src/terrain/`) is DONE. Remaining, in rough order:
   poly-bound at this scene size). Prop/car contact shadows via blob decals.
 - Tiling textures multiplied into the existing splat weights
   (albedo = Σ weight_i × color_i × [texture_i]) in `TerrainMaterial.ts`.
-- Thin ribbon road meshes along the track polyline if the rigid car needs
+- Thin ribbon road meshes along the track polyline if the car needs
   road-specific friction (heightfield = one friction value).
 - XR diorama: keep physics at RC scale; counter-scale the XR camera rig ×50
   instead of scaling the world (see "Physics scale & tuning"). Desktop

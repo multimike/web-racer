@@ -39,27 +39,42 @@ export interface RigidWheelTuning {
   maxSteerAngle: number;
   /** How much steering tightens down with speed (per m/s). */
   steerSpeedFalloff: number;
+  /**
+   * Grip-circle steering cap: commanded lateral accel is limited to this ×
+   * μ·g. 1 = corner exactly at the tire limit (no slide), higher lets the
+   * driver push a bit past it for controllable drift.
+   */
+  steerGripMargin: number;
   /** How fast the steering angle chases the stick, rad/s equivalent. */
   steerResponse: number;
 }
 
+// Real-scale tuning for what the geometry actually is: a ~3.9 m off-road
+// buggy on 1.5 m tires, ~1500 kg all-in (1300 kg chassis + 4 × 50 kg wheels).
+// Corner mass ≈ 325 kg.
 export const DEFAULT_RIGID_TUNING: RigidWheelTuning = {
   wheelRadius: 0.75,
   wheelWidth: 0.5,
-  wheelMass: 0.5,
-  wheelFriction: 1.2,
-  suspensionStiffness: 150,
-  suspensionDamping: 14,
-  // Keep near the traction limit (μ·load·r ≈ 13 N·m): beyond it the extra
-  // torque only spins the tires, while its reaction on the light chassis
-  // out-torques the front suspension (~34 N·m of restoring moment) and
-  // backflips the car off the line.
-  maxDriveTorque: 12,
+  wheelMass: 50,
+  // Street-tire-on-asphalt μ; ground is 1.0 so the combined contact friction
+  // lands right at ~1.0.
+  wheelFriction: 1.0,
+  // ~1.2 Hz ride frequency (soft off-road): k = m·ω² ≈ 325 × 7.4² ≈ 18 kN/m,
+  // static sag ≈ 3.2 kN / 18 kN/m ≈ 0.18 m of travel.
+  suspensionStiffness: 18000,
+  // ζ ≈ 0.35: c = 2ζ√(k·m) ≈ 0.7 × √(18000 × 325) ≈ 1.7 kN·s/m.
+  suspensionDamping: 1700,
+  // Near the rear-tire traction limit (μ·N·r ≈ 1.0 × ~3.7 kN × 0.75 m ≈
+  // 2.8 kN·m): beyond it the extra torque only spins the tires. Gives
+  // 2 × 2500 / 0.75 ≈ 6.7 kN of drive ≈ 4.4 m/s² — brisk off-roader.
+  maxDriveTorque: 2500,
   maxSpeed: 14,
   reverseSpeedFactor: 0.5,
-  coastTorque: 1,
+  // Engine-braking scale torque.
+  coastTorque: 200,
   maxSteerAngle: 0.6,
   steerSpeedFalloff: 0.06,
+  steerGripMargin: 1.2,
   steerResponse: 8,
 };
 
@@ -116,13 +131,14 @@ export class RigidWheelVehicle implements Vehicle {
     const chassisAggregate = new PhysicsAggregate(
       chassis,
       PhysicsShapeType.BOX,
-      { mass: 5, friction: 0.5, restitution: 0.1 },
+      { mass: 1300, friction: 0.5, restitution: 0.1 },
       scene,
     );
     this.chassisBody = chassisAggregate.body;
-    this.chassisBody.setMassProperties({ mass: 5, centerOfMass: new Vector3(0, -0.15, 0) });
-    this.chassisBody.setAngularDamping(0.3);
-    this.chassisBody.setLinearDamping(0.05);
+    this.chassisBody.setMassProperties({ mass: 1300, centerOfMass: new Vector3(0, -0.15, 0) });
+    // Token aero/driveline losses only — yaw damping is the tires' job.
+    this.chassisBody.setAngularDamping(0.1);
+    this.chassisBody.setLinearDamping(0.02);
 
     const wheelMat = new StandardMaterial('rigidWheelMat', scene);
     wheelMat.diffuseColor = new Color3(0.12, 0.12, 0.12);
@@ -228,7 +244,18 @@ export class RigidWheelVehicle implements Vehicle {
     const forwardSpeed = Vector3.Dot(this.linVel, this.chassisMesh.forward);
 
     const speedScale = 1 / (1 + Math.abs(forwardSpeed) * t.steerSpeedFalloff);
-    const targetSteer = intent.steering * t.maxSteerAngle * speedScale;
+    // Grip-circle cap: steering demands lateral accel v²·tanδ/L; past μ·g the
+    // front tires just wash out sideways — that was the high-speed slide. Cap
+    // the command at the angle the tires can actually hold (plus margin).
+    // Uses TOTAL planar speed, not forward speed: in a slide forward speed
+    // collapses while the car still carries full velocity sideways, and a
+    // forward-speed cap would open right back up and wind steering into the
+    // spin.
+    const planarSq = this.linVel.x * this.linVel.x + this.linVel.z * this.linVel.z;
+    const gripSteer = Math.atan(
+      (t.steerGripMargin * t.wheelFriction * 9.81 * 2 * WHEEL_Z) / Math.max(planarSq, 0.01),
+    );
+    const targetSteer = intent.steering * Math.min(t.maxSteerAngle * speedScale, gripSteer);
     this.steerAngle += clamp(targetSteer - this.steerAngle, -t.steerResponse * dt, t.steerResponse * dt);
 
     for (const wheel of this.wheelUnits) {
@@ -242,9 +269,22 @@ export class RigidWheelVehicle implements Vehicle {
       if (wheel.driven) {
         if (Math.abs(intent.throttle) > 0.01) {
           const speedCap = intent.throttle > 0 ? t.maxSpeed : t.maxSpeed * t.reverseSpeedFactor;
-          const targetOmega = (DRIVE_SIGN * intent.throttle * speedCap) / t.wheelRadius;
+          // Throttle commands TORQUE (tapering to zero at the speed cap), not
+          // a wheel-speed servo: a velocity target below the current rolling
+          // speed (any partial throttle at speed) would BRAKE the rears with
+          // the full maxDriveTorque, spending the whole rear friction budget
+          // longitudinally — that was the high-speed spin. The motor target is
+          // always the cap; the force limit is the throttle-scaled, tapered
+          // torque, so the motor only ever pushes toward the cap, never
+          // servo-brakes below it. (Taper > 1 when reversing against forward
+          // motion = braking.)
+          const targetOmega = (DRIVE_SIGN * Math.sign(intent.throttle) * speedCap) / t.wheelRadius;
+          const taper = clamp(1 - (forwardSpeed / speedCap) * Math.sign(intent.throttle), 0, 1.5);
           wheel.constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, targetOmega);
-          wheel.constraint.setAxisMotorMaxForce(PhysicsConstraintAxis.ANGULAR_X, t.maxDriveTorque);
+          wheel.constraint.setAxisMotorMaxForce(
+            PhysicsConstraintAxis.ANGULAR_X,
+            Math.abs(intent.throttle) * t.maxDriveTorque * taper,
+          );
         } else {
           wheel.constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
           wheel.constraint.setAxisMotorMaxForce(PhysicsConstraintAxis.ANGULAR_X, t.coastTorque);
