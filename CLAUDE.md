@@ -69,6 +69,18 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   Scene look (createScene.ts): warm DirectionalLight along `SUN_DIR` + cool
   hemispheric fill, sky-blue clearColor, EXP2 fog, blob shadow disc following
   the car at `Heightfield.getHeight` (no shadow maps anywhere).
+- `src/gfx/WheelDust.ts` — ground dust at the wheels: 4 ParticleSystems (one
+  per wheel, procedural blob texture, alpha blend) fed by
+  `RigidWheelVehicle.wheelStates` — per-wheel roll speed and contact slip
+  computed from physics (rim ω·r vs ground speed along the wheel's heading +
+  lateral speed along the axle), so wheelspin under power and brake lockup
+  count as skids, not just sideways slides. Emit rate = surface dustiness ×
+  (small rolling term + large skid term); color/amount blended from
+  `sampleSplat` splat weights at the contact (dirt road plumes most tan, rock
+  barely dusts grey). Grounded gate = wheel height vs `Heightfield.getHeight`
+  bounded on BOTH sides (no dust when airborne, on ramps the heightfield
+  doesn't know, or after falling out of the world below the terrain). Params
+  live-tweakable in the console via `__game.dust.params`.
 - `src/ui/TuningPanel.ts` — DOM overlay (top right): sliders bound live to
   `car.tuning` (CoM height/fore-aft and tire friction call
   `applyCenterOfMass`/`applyWheelFriction` to push into Havok; torque and

@@ -102,6 +102,20 @@ interface WheelUnit {
   driven: boolean;
 }
 
+/** Per-wheel contact kinematics, refreshed every update() — read by GFX
+ * (dust particles, later skid marks) without touching the physics bodies. */
+export interface WheelGroundState {
+  /** Wheel center, world space. */
+  readonly position: Vector3;
+  /** Hub linear velocity, world space. */
+  readonly velocity: Vector3;
+  /** Travel speed over the ground along the wheel's rolling direction, m/s. */
+  rollSpeed: number;
+  /** Total contact-patch slip, m/s: rim-vs-ground (wheelspin under power,
+   * lockup under braking) plus sideways sliding along the axle. */
+  slipSpeed: number;
+}
+
 /**
  * Rigid-body vehicle: each wheel is a real dynamic cylinder collider joined
  * to the chassis by a 6DoF constraint — vertical axis soft-locked with
@@ -116,6 +130,8 @@ export class RigidWheelVehicle implements Vehicle {
    * takes effect immediately; COM and friction need applyCenterOfMass /
    * applyWheelFriction after mutation. */
   readonly tuning: RigidWheelTuning;
+  /** One entry per wheel (FL, FR, RL, RR), refreshed every update(). */
+  readonly wheelStates: WheelGroundState[] = [];
   private chassisBody: PhysicsBody;
   private input: InputProvider;
   private wheelUnits: WheelUnit[] = [];
@@ -247,6 +263,7 @@ export class RigidWheelVehicle implements Vehicle {
       constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
 
       this.wheelUnits.push({ mesh, body: aggregate.body, shape, constraint, steered: cfg.steered, driven: cfg.driven });
+      this.wheelStates.push({ position: new Vector3(), velocity: new Vector3(), rollSpeed: 0, slipSpeed: 0 });
     });
   }
 
@@ -297,16 +314,40 @@ export class RigidWheelVehicle implements Vehicle {
     const forwardSpeed = Vector3.Dot(this.linVel, this.chassisMesh.forward);
     this._forwardSpeed = forwardSpeed;
 
-    // Driven-wheel rim speed for the engine sound: spin about the rear axle,
-    // which stays aligned with the chassis right axis (rears don't steer).
-    const right = this.chassisMesh.right;
+    // Per-wheel contact kinematics: rolling speed + slip for the dust GFX,
+    // driven-wheel rim speed for the engine sound. The wheel mesh's world X
+    // is its axle — spin is ABOUT local X so it can't smear the reading, and
+    // it follows steering on the fronts (rears stay = chassis right).
     let rimSpeed = 0;
     let drivenCount = 0;
-    for (const wheel of this.wheelUnits) {
-      if (!wheel.driven) continue;
+    for (let i = 0; i < this.wheelUnits.length; i++) {
+      const wheel = this.wheelUnits[i];
+      const state = this.wheelStates[i];
+      state.position.copyFrom(wheel.mesh.position);
+      wheel.body.getLinearVelocityToRef(state.velocity);
       wheel.body.getAngularVelocityToRef(this.angVel);
-      rimSpeed += DRIVE_SIGN * Vector3.Dot(this.angVel, right) * t.wheelRadius;
-      drivenCount += 1;
+      const axle = wheel.mesh.right;
+      const rim = DRIVE_SIGN * Vector3.Dot(this.angVel, axle) * t.wheelRadius;
+      if (wheel.driven) {
+        rimSpeed += rim;
+        drivenCount += 1;
+      }
+      // Rolling direction = axle × up, i.e. the wheel's heading projected onto
+      // the ground plane. Degenerates when the wheel lies on its side — call
+      // everything slide then (a capsized wheel has no rolling direction).
+      const headingLen = Math.hypot(axle.x, axle.z);
+      if (headingLen < 0.2) {
+        state.rollSpeed = 0;
+        state.slipSpeed = Math.hypot(state.velocity.x, state.velocity.z);
+      } else {
+        const fwdX = -axle.z / headingLen;
+        const fwdZ = axle.x / headingLen;
+        const groundFwd = state.velocity.x * fwdX + state.velocity.z * fwdZ;
+        const longSlip = rim - groundFwd;
+        const latSlip = Vector3.Dot(state.velocity, axle);
+        state.rollSpeed = Math.abs(groundFwd);
+        state.slipSpeed = Math.hypot(longSlip, latSlip);
+      }
     }
     this._drivenRimSpeed = drivenCount > 0 ? rimSpeed / drivenCount : 0;
 

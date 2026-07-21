@@ -16,6 +16,7 @@ import {
 } from '@babylonjs/core';
 import HavokPhysics from '@babylonjs/havok';
 import { RigidWheelVehicle } from '../car/RigidWheelVehicle';
+import { WheelDust } from '../gfx/WheelDust';
 import { buildEnvironment } from './environment';
 import type { TerrainMode } from './environment';
 import { SUN_DIR } from '../terrain/generateTerrain';
@@ -39,6 +40,8 @@ export interface GameScene {
   car: Vehicle;
   terrain: TerrainMode;
   view: ViewMode;
+  /** Wheel dust GFX — params live-tweakable via __game.dust.params. */
+  dust: WheelDust;
 }
 
 export async function createScene(
@@ -74,8 +77,9 @@ export async function createScene(
 
   const builtTerrain = buildEnvironment(scene, terrain, seed);
 
-  const car: Vehicle = new RigidWheelVehicle(scene, input);
+  const car = new RigidWheelVehicle(scene, input);
 
+  const dust = new WheelDust(scene, car, builtTerrain);
   const shadow = createBlobShadow(scene);
 
   if (view === 'xr') {
@@ -112,13 +116,14 @@ export async function createScene(
     // teleport/tunnel the car through geometry in one oversized step.
     const dt = Math.min(engine.getDeltaTime() / 1000, 1 / 30);
     car.update(dt);
+    dust.update();
     updateBlobShadow(shadow, car, builtTerrain?.heightfield ?? null);
     scene.render();
   });
 
   window.addEventListener('resize', () => engine.resize());
 
-  return { engine, scene, car, terrain, view };
+  return { engine, scene, car, terrain, view, dust };
 }
 
 /** Soft dark disc that follows the car at ground height — grounds the car

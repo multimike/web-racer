@@ -94,6 +94,31 @@ export function generateTerrain(seed: number): TerrainData {
   return { heightfield: hf, track, splat, shade, timings };
 }
 
+/** Bilinear sample of the splat weights at a world position → out (RGBA =
+ * grass, rock, dirt road, meadow; sums to 1). Matches the interpolation the
+ * GPU does with the per-vertex colors, so CPU consumers (wheel dust) agree
+ * with the rendered surface. Clamps outside the field. */
+export function sampleSplat(data: TerrainData, wx: number, wz: number, out: Float32Array): void {
+  const hf = data.heightfield;
+  const half = hf.size / 2;
+  const fx = clamp((wx + half) / hf.step, 0, hf.n - 1.001);
+  const fz = clamp((wz + half) / hf.step, 0, hf.n - 1.001);
+  const x0 = Math.floor(fx);
+  const z0 = Math.floor(fz);
+  const tx = fx - x0;
+  const tz = fz - z0;
+  const i00 = (z0 * hf.n + x0) * 4;
+  const i10 = i00 + 4;
+  const i01 = i00 + hf.n * 4;
+  const i11 = i01 + 4;
+  const s = data.splat;
+  for (let c = 0; c < 4; c++) {
+    out[c] =
+      (s[i00 + c] * (1 - tx) + s[i10 + c] * tx) * (1 - tz) +
+      (s[i01 + c] * (1 - tx) + s[i11 + c] * tx) * tz;
+  }
+}
+
 /** Baked terrain self-shadow: march toward the sun and compare the horizon
  * angle against the sun elevation. Soft penumbra via smoothstep in tan space.
  * Terrain is static, so this is real cast shadowing at zero runtime cost —
