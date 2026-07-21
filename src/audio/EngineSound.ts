@@ -28,7 +28,7 @@ const LAYERS: LayerSpec[] = [
  * uncomfortable beating at top speed; 2.2 keeps the sweep without the edge. */
 const PITCH_IDLE = 0.85;
 const PITCH_MAX = 2.2;
-const MASTER_VOLUME = 0.3;
+const MASTER_VOLUME = 0.1;
 
 export class EngineSound {
   private ctx: AudioContext | null = null;

@@ -35,11 +35,9 @@ document.body.appendChild(hud);
 
 const input = new CompositeInput([new DesktopGamepadInput(), new KeyboardInput()]);
 
-// Engine sound rpm: idle floor and how far flooring it from a stop revs the
-// engine. Gearless for now (AutomaticGearbox is parked — shifts were barely
-// audible against the car's ~2 s full acceleration run).
+// Engine sound idle floor. Gearless for now (AutomaticGearbox is parked —
+// shifts were barely audible against the car's ~2 s full acceleration run).
 const SOUND_IDLE_RPM = 0.08;
-const SOUND_STALL_REV = 0.25;
 
 createScene(canvas, input, terrain, seed, view).then((game) => {
   let engineSound: EngineSound | undefined;
@@ -54,8 +52,10 @@ createScene(canvas, input, terrain, seed, view).then((game) => {
       const intent = input.poll();
       // While reversing, the brake pedal is the active "throttle".
       const pedal = car.isReversing ? intent.brake : intent.throttle;
-      const speedRpm = Math.min(Math.abs(car.forwardSpeed) / car.tuning.maxSpeed, 1);
-      const rpm = Math.max(speedRpm, pedal * SOUND_STALL_REV, SOUND_IDLE_RPM);
+      // Rpm follows the driven WHEELS, not the chassis: wheelspin, airborne
+      // throttle blips, and a flipped car all rev the engine like they should.
+      const wheelRpm = Math.min(Math.abs(car.drivenRimSpeed) / car.tuning.maxSpeed, 1);
+      const rpm = Math.max(wheelRpm, SOUND_IDLE_RPM);
       sound.update(pedal, rpm);
     });
     createTuningPanel(game.scene, car, input);

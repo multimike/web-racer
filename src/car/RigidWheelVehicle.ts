@@ -123,6 +123,8 @@ export class RigidWheelVehicle implements Vehicle {
   private linVel = new Vector3();
   private _forwardSpeed = 0;
   private _reversing = false;
+  private _drivenRimSpeed = 0;
+  private angVel = new Vector3();
   /** Scene gravity magnitude — grip scales with m·g, so the steering cap must too. */
   private gravityMag: number;
 
@@ -262,6 +264,16 @@ export class RigidWheelVehicle implements Vehicle {
     return this._reversing;
   }
 
+  /**
+   * Mean rim speed of the driven wheels, m/s, signed (+ = forward roll).
+   * This is what the engine sound should track: unlike chassis speed it
+   * keeps revving when the wheels spin without traction (airborne, flipped,
+   * wheelspin on a slick surface).
+   */
+  get drivenRimSpeed(): number {
+    return this._drivenRimSpeed;
+  }
+
   /** Push tuning.comHeight/comForward into the chassis body. */
   applyCenterOfMass(): void {
     this.chassisBody.setMassProperties({
@@ -284,6 +296,19 @@ export class RigidWheelVehicle implements Vehicle {
     this.chassisBody.getLinearVelocityToRef(this.linVel);
     const forwardSpeed = Vector3.Dot(this.linVel, this.chassisMesh.forward);
     this._forwardSpeed = forwardSpeed;
+
+    // Driven-wheel rim speed for the engine sound: spin about the rear axle,
+    // which stays aligned with the chassis right axis (rears don't steer).
+    const right = this.chassisMesh.right;
+    let rimSpeed = 0;
+    let drivenCount = 0;
+    for (const wheel of this.wheelUnits) {
+      if (!wheel.driven) continue;
+      wheel.body.getAngularVelocityToRef(this.angVel);
+      rimSpeed += DRIVE_SIGN * Vector3.Dot(this.angVel, right) * t.wheelRadius;
+      drivenCount += 1;
+    }
+    this._drivenRimSpeed = drivenCount > 0 ? rimSpeed / drivenCount : 0;
 
     const speedScale = 1 / (1 + Math.abs(forwardSpeed) * t.steerSpeedFalloff);
     // Grip-circle cap: steering demands lateral accel v²·tanδ/L; past μ·g the
