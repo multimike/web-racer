@@ -41,14 +41,21 @@ export interface RigidWheelTuning {
   comHeight: number;
   /** Chassis center of mass, local Z (+ = toward the nose), m. */
   comForward: number;
-  /** Max steering angle at standstill, rad. */
-  maxSteerAngle: number;
-  /** How much steering tightens down with speed (per m/s). */
+  /**
+   * Turning radius at full lock, m — measured at the REAR AXLE CENTER
+   * (bicycle model: R = wheelbase / tan δ). The curb-to-curb radius real
+   * spec sheets quote is roughly this + half the track width. This is THE
+   * steering knob: max steer angle is derived from it and the wheelbase.
+   */
+  minTurnRadius: number;
+  /** How much steering tightens down with speed (per m/s). 0 = off: wheels
+   * reach full lock at any speed, like a real steering rack. */
   steerSpeedFalloff: number;
   /**
    * Grip-circle steering cap: commanded lateral accel is limited to this ×
    * μ·g. 1 = corner exactly at the tire limit (no slide), higher lets the
-   * driver push a bit past it for controllable drift.
+   * driver push a bit past it for controllable drift. 0 = cap disabled
+   * (fixed-angle steering test — expect understeer/slide when overdriven).
    */
   steerGripMargin: number;
   /** How fast the steering angle chases the stick, rad/s equivalent. */
@@ -72,11 +79,13 @@ export const DEFAULT_RIGID_TUNING: RigidWheelTuning = {
   maxBrakeTorque: 10000,         // Stronger brakes to match the speed
   comHeight: -0.45,              // Lowered COM further to prevent flipping at high speeds
   comForward: 0,
-  maxSteerAngle: 0.5,           // Slightly lower angle so it doesn't spin out instantly
-  steerSpeedFalloff: 0.04,
-  // The cap now uses REAL scene gravity (25, not a hard-coded 9.81), so 0.6
-  // here reproduces the same steering cap 1.5 gave against 9.81.
-  steerGripMargin: 0.6,
+  minTurnRadius: 5,
+  // Both speed limiters OFF by default: testing real fixed-angle steering
+  // (2026-07). Re-enable live from the tuning panel / console for A/B — the
+  // old feel was steerSpeedFalloff 0.04, steerGripMargin 0.6 (0.6 against
+  // scene gravity 25 ≈ the cap 1.5 gave against 9.81).
+  steerSpeedFalloff: 0,
+  steerGripMargin: 0,
   steerResponse: 12,            // Increased from 8 so the wheels snap to the stick faster
 }
 
@@ -90,6 +99,8 @@ const STEER_SIGN = 1;
 // car so A/B comparison is fair: outboard of the 1.4-wide body, ±1.0 wheelbase.
 const WHEEL_X = 1.05;
 const WHEEL_Z = 1.0;
+/** Front-to-rear axle distance — the L in every steering-geometry formula. */
+const WHEELBASE = 2 * WHEEL_Z;
 // Mount height: wheel center rests here (plus spring sag) below chassis center.
 const ATTACH_Y = -0.5;
 
@@ -100,6 +111,8 @@ interface WheelUnit {
   constraint: Physics6DoFConstraint;
   steered: boolean;
   driven: boolean;
+  /** Lateral offset from the chassis centerline, m (+ = right side). */
+  localX: number;
 }
 
 /** Per-wheel contact kinematics, refreshed every update() — read by GFX
@@ -262,11 +275,12 @@ export class RigidWheelVehicle implements Vehicle {
       constraint.setAxisMotorMaxForce(PhysicsConstraintAxis.ANGULAR_X, cfg.driven ? t.coastTorque : 0);
       constraint.setAxisMotorTarget(PhysicsConstraintAxis.ANGULAR_X, 0);
 
-      this.wheelUnits.push({ mesh, body: aggregate.body, shape, constraint, steered: cfg.steered, driven: cfg.driven });
+      this.wheelUnits.push({ mesh, body: aggregate.body, shape, constraint, steered: cfg.steered, driven: cfg.driven, localX: cfg.x });
       this.wheelStates.push({ position: new Vector3(), velocity: new Vector3(), rollSpeed: 0, slipSpeed: 0 });
     });
   }
 
+  /** Bicycle-model steer angle, rad (per-wheel Ackermann angles derive from it). */
   get currentSteerAngle(): number {
     return this.steerAngle;
   }
@@ -351,19 +365,27 @@ export class RigidWheelVehicle implements Vehicle {
     }
     this._drivenRimSpeed = drivenCount > 0 ? rimSpeed / drivenCount : 0;
 
-    const speedScale = 1 / (1 + Math.abs(forwardSpeed) * t.steerSpeedFalloff);
-    // Grip-circle cap: steering demands lateral accel v²·tanδ/L; past μ·g the
-    // front tires just wash out sideways — that was the high-speed slide. Cap
-    // the command at the angle the tires can actually hold (plus margin).
-    // Uses TOTAL planar speed, not forward speed: in a slide forward speed
+    // Full lock derived from the turning-radius knob (bicycle model).
+    const maxSteer = Math.atan(WHEELBASE / Math.max(t.minTurnRadius, WHEEL_X + 0.1));
+    // Optional speed limiters, both OFF (0) while testing real fixed-angle
+    // steering. Falloff shrinks lock with speed; the grip-circle cap limits
+    // commanded lateral accel v²·tanδ/L to margin × μ·g — past that the
+    // front tires just wash out sideways (the old high-speed slide). The cap
+    // uses TOTAL planar speed, not forward speed: in a slide forward speed
     // collapses while the car still carries full velocity sideways, and a
     // forward-speed cap would open right back up and wind steering into the
     // spin.
-    const planarSq = this.linVel.x * this.linVel.x + this.linVel.z * this.linVel.z;
-    const gripSteer = Math.atan(
-      (t.steerGripMargin * t.wheelFriction * this.gravityMag * 2 * WHEEL_Z) / Math.max(planarSq, 0.01),
-    );
-    const targetSteer = intent.steering * Math.min(t.maxSteerAngle * speedScale, gripSteer);
+    let steerCap = t.steerSpeedFalloff > 0
+      ? maxSteer / (1 + Math.abs(forwardSpeed) * t.steerSpeedFalloff)
+      : maxSteer;
+    if (t.steerGripMargin > 0) {
+      const planarSq = this.linVel.x * this.linVel.x + this.linVel.z * this.linVel.z;
+      const gripSteer = Math.atan(
+        (t.steerGripMargin * t.wheelFriction * this.gravityMag * WHEELBASE) / Math.max(planarSq, 0.01),
+      );
+      steerCap = Math.min(steerCap, gripSteer);
+    }
+    const targetSteer = intent.steering * steerCap;
     this.steerAngle += clamp(targetSteer - this.steerAngle, -t.steerResponse * dt, t.steerResponse * dt);
 
     // Brake pedal (left trigger / S): while rolling forward it clamps all
@@ -376,11 +398,21 @@ export class RigidWheelVehicle implements Vehicle {
     // agnostic, so reverse is just negative throttle to it.
     const drive = reversing ? -intent.brake : braking ? 0 : intent.throttle;
 
+    // Ackermann geometry: steerAngle is the BICYCLE steer angle (a virtual
+    // center wheel); each real front wheel is aimed at the common turn
+    // center, which sits R = L/tanδ to the side of the rear axle. The wheel
+    // offset x from the centerline gives tanδ_wheel = L / (R − x), i.e. the
+    // inner wheel turns tighter than the outer. Signed math handles both
+    // directions (positive steerAngle = right turn = center on the +x side).
+    const tanSteer = Math.tan(this.steerAngle);
     for (const wheel of this.wheelUnits) {
       if (wheel.steered) {
         // Kinematic steering hold: pin the yaw axis limits at the commanded
         // angle so the solver enforces it rigidly — no motor gains to shimmy.
-        const steer = STEER_SIGN * this.steerAngle;
+        const ackermann = Math.atan(
+          (WHEELBASE * tanSteer) / (WHEELBASE - wheel.localX * tanSteer),
+        );
+        const steer = STEER_SIGN * ackermann;
         wheel.constraint.setAxisMinLimit(PhysicsConstraintAxis.ANGULAR_Y, steer);
         wheel.constraint.setAxisMaxLimit(PhysicsConstraintAxis.ANGULAR_Y, steer);
       }

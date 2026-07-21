@@ -28,7 +28,11 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   `RigidWheelVehicle` (blue car): 4 real cylinder wheel colliders joined to
   the chassis by 6DoF constraints — vertical axis = damped spring
   (suspension), axle = velocity motor driven in torque mode (see gotchas),
-  steering = per-frame clamping of the yaw-axis limits (kinematic hold). Grip
+  steering = per-frame clamping of the yaw-axis limits (kinematic hold) with
+  Ackermann geometry — the tuning knob is `minTurnRadius` (radius of the
+  rear-axle-center path at full lock; bicycle angle δmax = atan(wheelbase/R))
+  and each front wheel is aimed at the common turn center, so the inner wheel
+  turns tighter than the outer. Grip
   comes from Havok contact friction. All four wheels carry a velocity motor:
   rears drive/coast, fronts sit at zero force until braking (brake = target 0,
   force = brake × maxBrakeTorque on all four — the one legitimate use of a
@@ -128,12 +132,14 @@ DualShock 4 or keyboard; XR support is not wired up yet.
   forces cornered cleanly and is recoverable from git history; a hybrid —
   rigid wheels for collision + explicit lateral force assist — is the likely
   eventual fix).
-- Steering at speed must be capped by the grip circle (lateral accel
-  v²·tanδ/L ≤ margin × μ·g, `steerGripMargin`) or full stick at speed
-  commands 3× more lateral accel than tires deliver = the old high-speed
-  slide. Compute the cap from TOTAL planar speed, not forward speed —
-  forward speed collapses in a slide and a forward-speed cap winds steering
-  INTO the spin.
+- Full-lock steering at speed commands far more lateral accel (v²·tanδ/L)
+  than the tires deliver = the old high-speed slide. The grip-circle cap
+  (lateral accel ≤ `steerGripMargin` × μ·g) and the speed falloff
+  (`steerSpeedFalloff`) fix that, but both are OPT-IN (0 = off) and default
+  OFF since 2026-07: testing real fixed-angle steering where the wheels reach
+  full lock at any speed. If the cap comes back, compute it from TOTAL planar
+  speed, not forward speed — forward speed collapses in a slide and a
+  forward-speed cap winds steering INTO the spin.
 - Test harnesses that step physics manually (pe._step) MUST call
   mesh.computeWorldMatrix(true) each frame before vehicle.update — without
   scene.render() the world-matrix cache goes stale and raycasts fire from
@@ -164,10 +170,11 @@ the wheels), wheels r=0.75 m (monster-truck proportions), ~1500 kg all-in
 (1300 kg chassis + 4×50 kg wheels), speeds ~14 m/s (≈50 km/h). All
 tuning values are physically real for that mass — suspension ~1.2 Hz ride
 frequency, drive torque near the tire traction limit, μ ≈ 1.0 — so sanity-
-check changes against real-vehicle numbers. Steering is capped by a
-grip-circle limit (commanded lateral accel ≤ steerGripMargin × μ·g) on top of
-the linear speed falloff; that cap is what stops terminal understeer/slide at
-high speed. For the XR
+check changes against real-vehicle numbers. Steering: `minTurnRadius`
+(default 5 m at the rear axle center) sets full lock; the grip-circle cap
+and speed falloff that used to stop the terminal understeer/slide at high
+speed are currently disabled by default (see gotcha above) while fixed-angle
+Ackermann steering is feel-tested. For the XR
 diorama: do NOT scale the world or a render parent (Havok writes world-space
 transforms into meshes every frame and would fight a scaled parent). Instead
 counter-scale the PLAYER — parent the WebXR camera under a rig node scaled

@@ -19,6 +19,8 @@ const SLIDERS: SliderSpec[] = [
   { key: 'wheelFriction', label: 'tire friction', min: 0.2, max: 8, step: 0.1, apply: (c) => c.applyWheelFriction() },
   { key: 'maxDriveTorque', label: 'drive torque', min: 500, max: 20000, step: 250 },
   { key: 'maxSpeed', label: 'max speed', min: 5, max: 40, step: 1 },
+  { key: 'minTurnRadius', label: 'turn radius (m)', min: 2, max: 12, step: 0.25 },
+  { key: 'steerGripMargin', label: 'grip steer cap (0=off)', min: 0, max: 2, step: 0.05 },
 ];
 
 /**
