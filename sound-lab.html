@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Engine Sound Lab</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1d2026;
+    --line: #2c313a;
+    --text: #d7dce4;
+    --dim: #8a93a2;
+    --accent: #4fa8ff;
+    --hot: #ff7a45;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    background: var(--bg); color: var(--text);
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--dim); margin: 0 0 20px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px; margin-bottom: 16px;
+  }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .row + .row { margin-top: 12px; }
+  label { color: var(--dim); min-width: 120px; }
+  input[type=range] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+  input[type=number] {
+    width: 70px; background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px;
+    font: inherit;
+  }
+  select, button {
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px;
+    font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary {
+    background: var(--accent); border-color: var(--accent); color: #0b1524;
+    font-weight: 700; padding: 8px 18px;
+  }
+  button.primary.on { background: var(--hot); border-color: var(--hot); }
+  .val { min-width: 72px; text-align: right; color: var(--text); }
+  .throttle-bar {
+    flex: 1; height: 18px; border: 1px solid var(--line); border-radius: 9px;
+    overflow: hidden; background: var(--bg); min-width: 140px;
+  }
+  .throttle-bar > div {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--hot));
+  }
+  .layer {
+    display: grid; align-items: center; gap: 10px;
+    grid-template-columns: 90px 80px 1fr 130px 70px 60px 30px;
+    padding: 8px 0; border-bottom: 1px solid var(--line);
+  }
+  .layer:last-child { border-bottom: none; }
+  .layer .hz { color: var(--dim); text-align: right; }
+  .head { color: var(--dim); font-size: 12px; border-bottom: 1px solid var(--line); }
+  canvas { width: 100%; height: 110px; display: block; background: var(--bg); border-radius: 6px; }
+  kbd {
+    background: var(--bg); border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 4px; padding: 0 5px; font: inherit; font-size: 12px;
+  }
+  .hint { color: var(--dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Engine Sound Lab</h1>
+<p class="sub">Sine-layer mixer &mdash; 40 + 70 Hz idle, 90 Hz gated by throttle. Hold <kbd>Space</kbd>/<kbd>W</kbd> or DualShock <kbd>R2</kbd> to rev.</p>
+
+<div class="panel">
+  <div class="row">
+    <button id="power" class="primary">&#9654; Start audio</button>
+    <label style="min-width:auto">master</label>
+    <input id="master" type="range" min="0" max="1" step="0.01" value="0.5" />
+    <span class="val" id="masterVal">50%</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="row">
+    <label>pitch &times;</label>
+    <input id="pitch" type="range" min="0.5" max="3" step="0.01" value="1" />
+    <span class="val" id="pitchVal">1.00&times;</span>
+  </div>
+  <div class="row">
+    <label>throttle &rarr; pitch</label>
+    <input id="thrPitch" type="range" min="0" max="1" step="0.01" value="0.3" />
+    <span class="val" id="thrPitchVal">30%</span>
+  </div>
+  <div class="row">
+    <label>response (s)</label>
+    <input id="response" type="range" min="0.02" max="0.6" step="0.01" value="0.12" />
+    <span class="val" id="responseVal">0.12</span>
+  </div>
+  <div class="row">
+    <label>throttle</label>
+    <input id="throttle" type="range" min="0" max="1" step="0.01" value="0" />
+    <div class="throttle-bar"><div id="thrFill"></div></div>
+    <span class="val" id="thrVal">0%</span>
+  </div>
+  <div class="row"><span class="hint" id="padHint">no gamepad detected &mdash; connect DS4 and press any button</span></div>
+</div>
+
+<div class="panel">
+  <div class="layer head">
+    <span>wave</span><span>freq (Hz)</span><span>level</span><span>mode</span><span>now</span><span></span><span></span>
+  </div>
+  <div id="layers"></div>
+  <div class="row" style="margin-top:10px">
+    <button id="add">+ add layer</button>
+  </div>
+</div>
+
+<div class="panel">
+  <canvas id="scope" width="1200" height="220"></canvas>
+</div>
+
+<script>
+"use strict";
+
+const state = {
+  running: false,
+  pitch: 1,
+  thrPitch: 0.3,
+  response: 0.12,
+  master: 0.5,
+  throttleSlider: 0,
+  keyThrottle: 0,
+  padThrottle: 0,
+  throttle: 0,       // smoothed
+  layers: [],
+};
+
+let ctx = null, masterGain = null, analyser = null;
+let nextId = 1;
+
+function makeLayer(freq, level, mode, wave) {
+  return { id: nextId++, freq, level, mode, wave: wave || "sine", muted: false, osc: null, gain: null };
+}
+state.layers.push(makeLayer(40, 0.8, "always"));
+state.layers.push(makeLayer(70, 0.6, "always"));
+state.layers.push(makeLayer(90, 0.7, "throttle"));
+
+// ---------- audio ----------
+
+function ensureAudio() {
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = ctx.createGain();
+  masterGain.gain.value = state.master;
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 2048;
+  masterGain.connect(analyser);
+  analyser.connect(ctx.destination);
+  for (const l of state.layers) startLayerNodes(l);
+}
+
+function startLayerNodes(l) {
+  if (!ctx || l.osc) return;
+  l.gain = ctx.createGain();
+  l.gain.gain.value = 0;
+  l.gain.connect(masterGain);
+  l.osc = ctx.createOscillator();
+  l.osc.type = l.wave;
+  l.osc.frequency.value = l.freq;
+  l.osc.connect(l.gain);
+  l.osc.start();
+}
+
+function stopLayerNodes(l) {
+  if (!l.osc) return;
+  l.osc.stop();
+  l.osc.disconnect();
+  l.gain.disconnect();
+  l.osc = null;
+  l.gain = null;
+}
+
+function layerThrottleWeight(l, thr) {
+  if (l.mode === "throttle") return thr;
+  if (l.mode === "inverse") return 1 - thr;
+  return 1;
+}
+
+// ---------- inputs ----------
+
+const $ = (id) => document.getElementById(id);
+
+const powerBtn = $("power");
+powerBtn.addEventListener("click", async () => {
+  ensureAudio();
+  if (!state.running) {
+    await ctx.resume();
+    state.running = true;
+    powerBtn.classList.add("on");
+    powerBtn.innerHTML = "&#9632; Stop audio";
+  } else {
+    await ctx.suspend();
+    state.running = false;
+    powerBtn.classList.remove("on");
+    powerBtn.innerHTML = "&#9654; Start audio";
+  }
+});
+
+function bindSlider(id, valId, key, fmt) {
+  const el = $(id), val = $(valId);
+  el.addEventListener("input", () => {
+    state[key] = parseFloat(el.value);
+    val.textContent = fmt(state[key]);
+  });
+  val.textContent = fmt(parseFloat(el.value));
+}
+bindSlider("master", "masterVal", "master", (v) => Math.round(v * 100) + "%");
+bindSlider("pitch", "pitchVal", "pitch", (v) => v.toFixed(2) + "×");
+bindSlider("thrPitch", "thrPitchVal", "thrPitch", (v) => Math.round(v * 100) + "%");
+bindSlider("response", "responseVal", "response", (v) => v.toFixed(2));
+bindSlider("throttle", "thrVal", "throttleSlider", (v) => Math.round(v * 100) + "%");
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.code === "KeyW") {
+    if (e.code === "Space") e.preventDefault();
+    state.keyThrottle = 1;
+  }
+});
+window.addEventListener("keyup", (e) => {
+  if (e.code === "Space" || e.code === "KeyW") state.keyThrottle = 0;
+});
+
+function pollGamepad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const p of pads) {
+    if (!p || p.mapping !== "standard") continue;
+    state.padThrottle = p.buttons[7] ? p.buttons[7].value : 0; // R2
+    $("padHint").textContent = p.id + " connected — R2 = throttle";
+    return;
+  }
+  state.padThrottle = 0;
+}
+
+// ---------- layer UI ----------
+
+const layersEl = $("layers");
+
+function renderLayers() {
+  layersEl.innerHTML = "";
+  for (const l of state.layers) {
+    const row = document.createElement("div");
+    row.className = "layer";
+
+    const wave = document.createElement("select");
+    for (const w of ["sine", "triangle", "square", "sawtooth"]) {
+      const o = document.createElement("option");
+      o.value = w; o.textContent = w;
+      if (w === l.wave) o.selected = true;
+      wave.appendChild(o);
+    }
+    wave.addEventListener("change", () => {
+      l.wave = wave.value;
+      if (l.osc) l.osc.type = l.wave;
+    });
+
+    const freq = document.createElement("input");
+    freq.type = "number"; freq.min = "10"; freq.max = "2000"; freq.step = "1";
+    freq.value = l.freq;
+    freq.addEventListener("input", () => { l.freq = parseFloat(freq.value) || l.freq; });
+
+    const level = document.createElement("input");
+    level.type = "range"; level.min = "0"; level.max = "1"; level.step = "0.01";
+    level.value = l.level;
+    level.addEventListener("input", () => { l.level = parseFloat(level.value); });
+
+    const mode = document.createElement("select");
+    for (const [v, txt] of [["always", "always"], ["throttle", "throttle on"], ["inverse", "throttle off"]]) {
+      const o = document.createElement("option");
+      o.value = v; o.textContent = txt;
+      if (v === l.mode) o.selected = true;
+      mode.appendChild(o);
+    }
+    mode.addEventListener("change", () => { l.mode = mode.value; });
+
+    const hz = document.createElement("span");
+    hz.className = "hz";
+    l.hzEl = hz;
+
+    const mute = document.createElement("button");
+    mute.textContent = l.muted ? "unmute" : "mute";
+    mute.addEventListener("click", () => {
+      l.muted = !l.muted;
+      mute.textContent = l.muted ? "unmute" : "mute";
+    });
+
+    const del = document.createElement("button");
+    del.textContent = "×";
+    del.title = "remove layer";
+    del.addEventListener("click", () => {
+      stopLayerNodes(l);
+      state.layers.splice(state.layers.indexOf(l), 1);
+      renderLayers();
+    });
+
+    row.append(wave, freq, level, mode, hz, mute, del);
+    layersEl.appendChild(row);
+  }
+}
+renderLayers();
+
+$("add").addEventListener("click", () => {
+  const l = makeLayer(120, 0.5, "throttle");
+  state.layers.push(l);
+  if (ctx) startLayerNodes(l);
+  renderLayers();
+});
+
+// ---------- main loop ----------
+// Audio/input updates run on setInterval, not rAF: rAF pauses entirely in a
+// hidden tab, which would freeze gains/pitch at their last values while the
+// oscillators keep sounding. rAF only draws the scope.
+
+const scope = $("scope");
+const scopeCtx = scope.getContext("2d");
+let lastT = performance.now();
+
+function drawScope() {
+  scopeCtx.fillStyle = "#14161a";
+  scopeCtx.fillRect(0, 0, scope.width, scope.height);
+  if (!analyser || !state.running) return;
+  const data = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(data);
+  scopeCtx.strokeStyle = "#4fa8ff";
+  scopeCtx.lineWidth = 2;
+  scopeCtx.beginPath();
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / data.length) * scope.width;
+    const y = (0.5 - data[i] * 0.45) * scope.height;
+    if (i === 0) scopeCtx.moveTo(x, y);
+    else scopeCtx.lineTo(x, y);
+  }
+  scopeCtx.stroke();
+}
+
+function update() {
+  const now = performance.now();
+  const dt = Math.min((now - lastT) / 1000, 0.1);
+  lastT = now;
+
+  pollGamepad();
+  const target = Math.max(state.throttleSlider, state.keyThrottle, state.padThrottle);
+
+  // exponential smoothing toward target: engine "inertia"
+  const k = 1 - Math.exp(-dt / state.response);
+  state.throttle += (target - state.throttle) * k;
+  if (Math.abs(target - state.throttle) < 0.001) state.throttle = target;
+
+  $("thrFill").style.width = (state.throttle * 100).toFixed(1) + "%";
+
+  if (ctx) {
+    const t = ctx.currentTime;
+    masterGain.gain.setTargetAtTime(state.master, t, 0.02);
+    const pitchMul = state.pitch * (1 + state.thrPitch * state.throttle);
+    for (const l of state.layers) {
+      if (!l.osc) continue;
+      const f = l.freq * pitchMul;
+      l.osc.frequency.setTargetAtTime(f, t, 0.02);
+      const g = l.muted ? 0 : l.level * layerThrottleWeight(l, state.throttle);
+      l.gain.gain.setTargetAtTime(g, t, 0.03);
+      if (l.hzEl) l.hzEl.textContent = f.toFixed(1);
+    }
+  }
+}
+setInterval(update, 33);
+
+function scopeLoop() {
+  requestAnimationFrame(scopeLoop);
+  drawScope();
+}
+requestAnimationFrame(scopeLoop);
+
+window.__lab = state; // console poking
+</script>
+</body>
+</html>

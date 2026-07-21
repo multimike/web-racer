@@ -4,6 +4,7 @@ import { CompositeInput } from './input/CompositeInput';
 import { DesktopGamepadInput } from './input/DesktopGamepadInput';
 import { KeyboardInput } from './input/KeyboardInput';
 import { RigidWheelVehicle } from './car/RigidWheelVehicle';
+import { EngineSound } from './audio/EngineSound';
 import { createTuningPanel } from './ui/TuningPanel';
 
 const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement;
@@ -34,12 +35,34 @@ document.body.appendChild(hud);
 
 const input = new CompositeInput([new DesktopGamepadInput(), new KeyboardInput()]);
 
+// Engine sound rpm: idle floor and how far flooring it from a stop revs the
+// engine. Gearless for now (AutomaticGearbox is parked — shifts were barely
+// audible against the car's ~2 s full acceleration run).
+const SOUND_IDLE_RPM = 0.08;
+const SOUND_STALL_REV = 0.25;
+
 createScene(canvas, input, terrain, seed, view).then((game) => {
+  let engineSound: EngineSound | undefined;
   if (game.car instanceof RigidWheelVehicle) {
-    createTuningPanel(game.scene, game.car, input);
+    const car = game.car;
+    // Sine-layer engine sound (see sound-lab.html for the tuning playground).
+    // Audio unlocks on the first click/key press.
+    const sound = new EngineSound();
+    engineSound = sound;
+    sound.attachUnlock();
+    game.scene.onBeforeRenderObservable.add(() => {
+      const intent = input.poll();
+      // While reversing, the brake pedal is the active "throttle".
+      const pedal = car.isReversing ? intent.brake : intent.throttle;
+      const speedRpm = Math.min(Math.abs(car.forwardSpeed) / car.tuning.maxSpeed, 1);
+      const rpm = Math.max(speedRpm, pedal * SOUND_STALL_REV, SOUND_IDLE_RPM);
+      sound.update(pedal, rpm);
+    });
+    createTuningPanel(game.scene, car, input);
   }
   if (import.meta.env.DEV) {
     // Handy for the Babylon Inspector / console poking during development.
-    (window as unknown as { __game: typeof game }).__game = game;
+    const dev = { ...game, engineSound };
+    (window as unknown as { __game: typeof dev }).__game = dev;
   }
 });

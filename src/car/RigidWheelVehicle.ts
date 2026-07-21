@@ -62,15 +62,15 @@ export const DEFAULT_RIGID_TUNING: RigidWheelTuning = {
   wheelRadius: 0.75,
   wheelWidth: 0.5,
   wheelMass: 50,
-  wheelFriction: 2.0,           // Slightly more grip to handle the aggressive physics
+  wheelFriction: 1.2,           // Slightly more grip to handle the aggressive physics
   suspensionStiffness: 85000,   // Jacked up from 25000 to resist high gravity
   suspensionDamping: 4500,      // Increased to stop the car from bouncing like a toy
-  maxDriveTorque: 6000,         // Increased so it can propel the heavy-feeling car instantly
+  maxDriveTorque: 10000,         // Increased so it can propel the heavy-feeling car instantly
   maxSpeed: 25,                 // Increased for a faster sense of speed
   reverseSpeedFactor: 0.5,
-  coastTorque: 500,             // More engine braking helps it feel grounded when letting off gas
-  maxBrakeTorque: 6000,         // Stronger brakes to match the speed
-  comHeight: -0.3,              // Lowered COM further to prevent flipping at high speeds
+  coastTorque: 2000,             // More engine braking helps it feel grounded when letting off gas
+  maxBrakeTorque: 10000,         // Stronger brakes to match the speed
+  comHeight: -0.45,              // Lowered COM further to prevent flipping at high speeds
   comForward: 0,
   maxSteerAngle: 0.5,           // Slightly lower angle so it doesn't spin out instantly
   steerSpeedFalloff: 0.04,
@@ -121,6 +121,8 @@ export class RigidWheelVehicle implements Vehicle {
   private wheelUnits: WheelUnit[] = [];
   private steerAngle = 0;
   private linVel = new Vector3();
+  private _forwardSpeed = 0;
+  private _reversing = false;
   /** Scene gravity magnitude — grip scales with m·g, so the steering cap must too. */
   private gravityMag: number;
 
@@ -250,6 +252,16 @@ export class RigidWheelVehicle implements Vehicle {
     return this.steerAngle;
   }
 
+  /** Chassis speed along its forward axis, m/s (negative = rolling backward). */
+  get forwardSpeed(): number {
+    return this._forwardSpeed;
+  }
+
+  /** True while the brake pedal is acting as reverse throttle. */
+  get isReversing(): boolean {
+    return this._reversing;
+  }
+
   /** Push tuning.comHeight/comForward into the chassis body. */
   applyCenterOfMass(): void {
     this.chassisBody.setMassProperties({
@@ -271,6 +283,7 @@ export class RigidWheelVehicle implements Vehicle {
 
     this.chassisBody.getLinearVelocityToRef(this.linVel);
     const forwardSpeed = Vector3.Dot(this.linVel, this.chassisMesh.forward);
+    this._forwardSpeed = forwardSpeed;
 
     const speedScale = 1 / (1 + Math.abs(forwardSpeed) * t.steerSpeedFalloff);
     // Grip-circle cap: steering demands lateral accel v²·tanδ/L; past μ·g the
@@ -292,6 +305,7 @@ export class RigidWheelVehicle implements Vehicle {
     // accelerator it becomes reverse throttle — the standard arcade scheme.
     const reversing = intent.brake > 0.01 && forwardSpeed < 0.5 && intent.throttle <= 0.01;
     const braking = intent.brake > 0.01 && !reversing;
+    this._reversing = reversing;
     // Signed drive command: the driven-wheel motor code below is direction-
     // agnostic, so reverse is just negative throttle to it.
     const drive = reversing ? -intent.brake : braking ? 0 : intent.throttle;
