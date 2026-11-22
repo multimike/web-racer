@@ -1,4 +1,5 @@
 import type { SolidMesh } from '../gfx/solid/SolidMesh';
+import type { RGB } from '../gfx/solid/color';
 
 /**
  * Asset contract: every car, prop and building in the game is a pure
@@ -232,10 +233,28 @@ export interface CarAsset {
   spec: CarSpec;
   /** Number of liveries; 0 is the design sheet's own colours. */
   liveries: number;
+  /**
+   * What each livery looks like as a swatch (the game menu's two-tone paint
+   * chip), one entry per livery in livery order (`paints.length ===
+   * liveries`), taken from the livery data `build` paints with — never typed
+   * a second time. `name`: the livery's own name ('Reef', 'Vermilion');
+   * `body`: the shell colour; `accent`: the second colour that reads on the
+   * car — the cage (reef-rocket, neon-wasp, comet-fox), or the fenders and
+   * side panels where the cage wears the body colour (riot-ram). Every game
+   * car has it; optional only for reference rigs (blockout).
+   */
+  paints?: readonly CarPaint[];
   /** Build the full car. `livery` recolours paint/accents, never the shape. */
   build(livery?: number): CarGeometry;
   triBudget: number;
   reference: AssetReference;
+}
+
+/** One livery as a swatch (`CarAsset.paints`). sRGB 0..1. */
+export interface CarPaint {
+  name: string;
+  body: RGB;
+  accent: RGB;
 }
 
 export type Asset = PropAsset | CarAsset;

@@ -2,8 +2,11 @@
  * Procedural engine sound: the sine-layer recipe from sound-lab.html.
  * Two layers (40 + 70 Hz) drone whenever the engine runs, a third (90 Hz)
  * fades in with throttle; the whole stack pitches up with gearbox rpm.
- * Pure Web Audio — nothing here touches Babylon.
+ * Pure Web Audio — nothing here touches Babylon. The context (and the
+ * autoplay unlock) belongs to the shared `AudioHub`; the layers are built
+ * when the hub starts.
  */
+import type { AudioHub } from './AudioHub';
 
 interface LayerSpec {
   freq: number;
@@ -13,7 +16,6 @@ interface LayerSpec {
 }
 
 interface LayerNodes {
-  spec: LayerSpec;
   osc: OscillatorNode;
   gain: GainNode;
 }
@@ -30,70 +32,35 @@ const PITCH_IDLE = 0.85;
 const PITCH_MAX = 2.2;
 const MASTER_VOLUME = 0.1;
 
+/** Frequency and gain (master volume included) of each layer for a pedal
+ * and rpm (0..1) — what `update` steers towards; the music lab renders the
+ * engine from it to judge the music against it. */
+export function engineLayers(throttle: number, rpm: number): { freq: number; gain: number }[] {
+  const pitch = PITCH_IDLE + (PITCH_MAX - PITCH_IDLE) * rpm;
+  return LAYERS.map((spec) => ({
+    freq: spec.freq * pitch,
+    gain: MASTER_VOLUME * (spec.throttleGated ? spec.level * throttle : spec.level * (0.55 + 0.45 * rpm)),
+  }));
+}
+
 export class EngineSound {
+  private readonly hub: AudioHub;
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private layers: LayerNodes[] = [];
   private throttle = 0;
   private rpm = 0;
-  private unlock: (() => void) | null = null;
-  private onVisibility: (() => void) | null = null;
-  private resuming = false;
 
-  /**
-   * Browsers only allow audio to start from a user gesture, so arm
-   * listeners; the graph is built on the first click or key press. The
-   * listeners stay until the context actually runs (a resume that did not
-   * take is tried again at the next gesture). `update()` also starts / resumes
-   * the context once the page has had user activation by any means
-   * (`navigator.userActivation.hasBeenActive`) — whether a gamepad press
-   * counts as activation is the browser's call.
-   */
-  attachUnlock(): void {
-    const unlock = () => {
-      this.start();
-      this.resume(true);
-      if (this.ctx?.state === 'running') this.dropUnlock();
-    };
-    this.unlock = unlock;
-    window.addEventListener('pointerdown', unlock);
-    window.addEventListener('keydown', unlock);
+  constructor(hub: AudioHub) {
+    this.hub = hub;
+    hub.onStart((ctx, output) => this.build(ctx, output));
   }
 
-  private dropUnlock(): void {
-    if (!this.unlock) return;
-    window.removeEventListener('pointerdown', this.unlock);
-    window.removeEventListener('keydown', this.unlock);
-    this.unlock = null;
-  }
-
-  /** resume() with its rejection handled (a context closed by dispose()
-   * before the unlock rejects the pending promise). A gesture always calls
-   * it; the per-frame retry waits for the previous attempt to settle. */
-  private resume(fromGesture = false): void {
-    const ctx = this.ctx;
-    if (!ctx || ctx.state !== 'suspended' || (this.resuming && !fromGesture)) return;
-    this.resuming = true;
-    ctx.resume().then(
-      () => {
-        this.resuming = false;
-        if (ctx.state === 'running') this.dropUnlock();
-      },
-      () => {
-        this.resuming = false;
-      },
-    );
-  }
-
-  private start(): void {
-    if (this.ctx) return;
-    const ctx = new AudioContext();
+  private build(ctx: AudioContext, output: AudioNode): void {
     this.ctx = ctx;
-
     this.master = ctx.createGain();
-    this.master.gain.value = MASTER_VOLUME;
-    this.master.connect(ctx.destination);
-
+    this.master.gain.value = 1;
+    this.master.connect(output);
     for (const spec of LAYERS) {
       const gain = ctx.createGain();
       gain.gain.value = 0;
@@ -103,18 +70,8 @@ export class EngineSound {
       osc.frequency.value = spec.freq;
       osc.connect(gain);
       osc.start();
-      this.layers.push({ spec, osc, gain });
+      this.layers.push({ osc, gain });
     }
-
-    // Babylon's render loop (and with it our parameter updates) pauses in a
-    // hidden tab while oscillators would keep droning — mute with the tab.
-    this.onVisibility = () => {
-      if (document.visibilityState === 'hidden') ctx.suspend().catch(() => {});
-      else this.resume();
-    };
-    document.addEventListener('visibilitychange', this.onVisibility);
-
-    this.resume();
     this.apply();
   }
 
@@ -122,38 +79,25 @@ export class EngineSound {
   update(throttle: number, rpm: number): void {
     this.throttle = throttle;
     this.rpm = rpm;
-    // No click or key yet (a gamepad-only session): start as soon as the
-    // browser says the page has been activated, and keep retrying a resume
-    // that has not taken while the page is visible.
-    if (this.unlock && typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
-      this.start();
-      if (document.visibilityState === 'visible') this.resume();
-    }
     this.apply();
   }
 
-  /** Stop the sound and drop every listener. */
+  /** Stop the layers (the hub owns and closes the context). */
   dispose(): void {
-    this.dropUnlock();
-    if (this.onVisibility) document.removeEventListener('visibilitychange', this.onVisibility);
-    this.onVisibility = null;
     for (const { osc } of this.layers) osc.stop();
     this.layers = [];
-    this.ctx?.close().catch(() => {});
-    this.ctx = null;
+    this.master?.disconnect();
     this.master = null;
+    this.ctx = null;
   }
 
   private apply(): void {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this.ctx || !this.hub.running) return;
     const t = this.ctx.currentTime;
-    const pitch = PITCH_IDLE + (PITCH_MAX - PITCH_IDLE) * this.rpm;
-    for (const { spec, osc, gain } of this.layers) {
-      osc.frequency.setTargetAtTime(spec.freq * pitch, t, 0.04);
-      const g = spec.throttleGated
-        ? spec.level * this.throttle
-        : spec.level * (0.55 + 0.45 * this.rpm);
-      gain.gain.setTargetAtTime(g, t, 0.06);
-    }
+    const want = engineLayers(this.throttle, this.rpm);
+    this.layers.forEach(({ osc, gain }, i) => {
+      osc.frequency.setTargetAtTime(want[i].freq, t, 0.04);
+      gain.gain.setTargetAtTime(want[i].gain, t, 0.06);
+    });
   }
 }

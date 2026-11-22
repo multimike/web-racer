@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web Racer menu: FINAL reference mockup</title>
+<link rel="icon" href="data:,">
+<!--
+  FINAL reference mockup of the menu system (see SPEC.md beside this file).
+    ?screen=title | car | setup | settings | controls | pause | confirm | post     (default title)
+    &prompts=kb     keyboard prompts instead of DualShock glyphs
+    &staged=1       title only: the RACE row and the next-race plate with staged changes
+  Backdrops are real frames of the game without its HUD:
+    arcade-clean-chase.png    the grid, chase view            (title, setup, settings, controls)
+    final-bg-comet.png        the grid, chase view on COMET FOX  (car: the camera follows the highlighted car)
+    native-backdrop-race.png  mid-race, chase view            (pause, confirm, post)
+  Language (three colour rules):
+    YELLOW = where you are (focus: one solid yellow plate, ink text, white rim, hard shadow, gutter arrow)
+    CYAN   = what is set (current value)            RED-PINK = destructive
+  1 rem = 1/94.1 of the height (the HUD's em), capped by the width.
+-->
+<style>
+:root {
+  --slate: #141e27; --ink: #0b141c; --rim: #aebbc2; --cyan: #14e8f6; --yellow: #ffe14a;
+  --red: #d42a3c; --pink: #ff8e98; --cream: #fff6dc; --cobalt: #2b4fc4;
+  --skew: -10deg; --unskew: 10deg;
+  /* smallest caption: never under 13 CSS px */
+  --cap: max(2.05rem, 13px);
+}
+html { font-size: min(1.0627vh, 0.68vw); }
+body {
+  margin: 0; height: 100vh; overflow: hidden; background: var(--ink); color: #fff;
+  font-family: system-ui, -apple-system, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900; font-style: italic; line-height: 1; white-space: nowrap;
+  font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
+  text-shadow: 0.035em 0.055em 0 rgba(8, 14, 20, 0.6), 0 0.09em 0.22em rgba(8, 14, 20, 0.35);
+  user-select: none;
+}
+.screen { position: fixed; inset: 0; display: none; overflow: hidden; }
+.screen.on { display: block; }
+.bg { position: absolute; inset: 0; background: center / cover no-repeat; }
+/* the title camera's sideways offset: the followed car stands right of the band */
+.bg.shift { left: 0; right: -15%; bottom: -15%; background-position: 0 0; }
+.tint { position: absolute; inset: 0; background: rgba(11, 20, 28, 0.38); }
+.t { display: inline-block; transform: skewX(var(--unskew)); }
+
+/* ── the band: one slanted slate slab from the left edge ── */
+.band {
+  position: absolute; top: 0; bottom: 0; left: -12rem; width: 68rem; box-sizing: border-box;
+  transform: skewX(var(--skew)); transform-origin: 0 100%;
+  background: linear-gradient(90deg, rgba(20, 30, 39, 0.97), rgba(20, 30, 39, 0.95) 60%, rgba(20, 30, 39, 0.9));
+  border-right: 1rem solid var(--yellow);
+  box-shadow: 1rem 0 0 rgba(11, 20, 28, 0.55), 1.5rem 0 0 var(--cyan), 3rem 0 3rem rgba(11, 20, 28, 0.35);
+}
+.band.wide { width: 78rem; }
+.band.slim { width: 59rem; }
+.band > * { position: absolute; left: 16rem; }
+
+/* ── logo ── */
+.logo { top: 5rem; }
+.logo .web { font-size: 4.4rem; letter-spacing: 0.34em; color: var(--yellow); margin-left: 0.5rem; }
+.logo .racer {
+  display: block; font-size: 11.6rem; letter-spacing: -0.01em; margin-top: 0.3rem; color: #fff;
+  -webkit-text-stroke: 0.11em var(--ink); paint-order: stroke fill;
+  text-shadow: 0.055em 0.06em 0 var(--cyan), 0.1em 0.11em 0 var(--ink);
+}
+.checker {
+  width: 37rem; height: 2rem; margin-top: 1.3rem; border-radius: 0.3rem;
+  background: conic-gradient(#fff 25%, var(--ink) 0 50%, #fff 0 75%, var(--ink) 0) 0 0 / 2rem 2rem;
+  box-shadow: 0.35rem 0.35rem 0 rgba(8, 14, 20, 0.5);
+}
+.tagline { font-size: var(--cap); letter-spacing: 0.3em; margin-top: 1.4rem; color: #e9edef; font-weight: 800; }
+
+/* ── heading of the sub screens ── */
+.head { top: 5.2rem; }
+.crumb { font-size: var(--cap); letter-spacing: 0.2em; color: var(--cyan); font-weight: 800; }
+.head .h { display: block; font-size: 6.4rem; margin-top: 0.9rem; -webkit-text-stroke: 0.09em var(--ink); paint-order: stroke fill; text-shadow: 0.05em 0.06em 0 var(--cyan), 0.09em 0.1em 0 var(--ink); }
+.head.big .h { font-size: 9.2rem; }
+.head .say { display: block; font-size: 2.3rem; font-weight: 800; line-height: 1.4; margin-top: 1.6rem; color: #e9edef; white-space: normal; width: 38rem; }
+
+/* ── menu rows ── */
+.menu { margin: 0; padding: 0; list-style: none; width: 41rem; }
+.row {
+  position: relative; height: 6.2rem; margin-bottom: 1rem; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 0 2.2rem 0 2.6rem;
+  border-radius: 1.3rem; background: rgba(174, 187, 194, 0.13);
+  border: 0.18rem solid rgba(174, 187, 194, 0.55);
+}
+.row .l { font-size: 3.1rem; letter-spacing: 0.03em; }
+.row .v { font-size: var(--cap); letter-spacing: 0.07em; color: var(--cyan); font-weight: 800; display: inline-flex; align-items: center; gap: 0.9rem; margin-left: auto; }
+.row.primary { height: 11.4rem; border-radius: 1.8rem; margin-bottom: 1.4rem; }
+.row.primary { flex-direction: column; align-items: stretch; justify-content: center; gap: 0.8rem; }
+.row.primary .top { display: flex; align-items: center; justify-content: space-between; }
+.row.primary .l { font-size: 6.2rem; }
+.row.primary .sub { font-size: var(--cap); letter-spacing: 0.02em; font-weight: 800; color: var(--cyan); }
+.row.danger .l { color: var(--pink); }
+.row.dim { opacity: 0.45; }
+.row.gap { margin-top: 2.2rem; }
+.row.go { border-color: var(--yellow); height: 8rem; }
+.row.go .l { color: var(--yellow); font-size: 3.7rem; }
+.row.go .v { color: #fff; }
+/* FOCUS: the one look, on every kind of row */
+.row.focus {
+  background: var(--yellow); border: 0.34rem solid #fff; color: var(--ink); text-shadow: none;
+  transform: translateX(2.6rem);
+  box-shadow: 0.7rem 0.7rem 0 rgba(8, 14, 20, 0.6);
+}
+.row.focus .l, .row.focus .v, .row.focus .sub { color: var(--ink); }
+.row.focus::before {
+  content: ''; position: absolute; left: -4.2rem; top: 50%; width: 2.2rem; height: 2.8rem; margin-top: -1.4rem;
+  background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); filter: drop-shadow(0.3rem 0.3rem 0 rgba(8,14,20,.6));
+}
+.ar { display: inline-block; width: 1.3rem; height: 1.8rem; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); flex: none; }
+.ar.l { clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+.ar.big { width: 2.6rem; height: 3.6rem; }
+.chev { display: inline-flex; gap: 0.5rem; }
+
+/* value widgets inside a row */
+.seg { display: inline-flex; gap: 0.5rem; }
+.seg b { font-size: 2.3rem; letter-spacing: 0.04em; padding: 0.7rem 0.95rem; border-radius: 0.9rem; border: 0.2rem solid transparent; color: rgba(255,255,255,0.62); font-weight: 900; }
+.seg b.sel { color: var(--cyan); border-color: var(--cyan); background: rgba(20, 232, 246, 0.14); }
+.row.focus .seg b { color: rgba(11, 20, 28, 0.62); }
+.row.focus .seg b.sel { color: #fff; background: var(--ink); border-color: var(--ink); }
+.step { display: inline-flex; align-items: center; gap: 1.4rem; color: #fff; }
+.step b { font-size: 3.4rem; min-width: 5.6rem; text-align: center; color: var(--cyan); }
+.step b small { font-size: var(--cap); letter-spacing: 0.1em; margin-left: 0.7rem; }
+.step .ar { opacity: 0.4; }
+.row.focus .step { color: var(--ink); } .row.focus .step b { color: var(--ink); } .row.focus .step .ar { opacity: 1; width: 1.7rem; height: 2.4rem; }
+.pips { display: inline-flex; gap: 0.34rem; }
+.pips i { width: 1rem; height: 2.1rem; border-radius: 0.25rem; background: rgba(174, 187, 194, 0.3); transform: skewX(var(--skew)); }
+.pips i.on { background: var(--cyan); }
+.row.focus .pips i { background: rgba(11, 20, 28, 0.22); } .row.focus .pips i.on { background: var(--ink); }
+.tag { font-size: max(1.5rem, 11px); letter-spacing: 0.08em; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-weight: 900; text-shadow: none; }
+.tag.was { background: var(--yellow); color: var(--ink); }
+.row.focus .tag.was { background: var(--ink); color: var(--yellow); }
+.tag.live { border: 0.16rem solid var(--cyan); color: var(--cyan); }
+.row.focus .tag.live { border-color: var(--ink); color: var(--ink); }
+.swatch { display: inline-block; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: linear-gradient(115deg, #1cafae 50%, #f16b59 50%); border: 0.16rem solid #fff; flex: none; }
+
+/* ── help line + prompts ── */
+.help { bottom: 9.6rem; left: 17rem !important; font-size: var(--cap); font-weight: 800; font-style: italic; letter-spacing: 0.03em; color: #cfd8dd; }
+.hints { display: flex; gap: 2.1rem; align-items: center; font-size: var(--cap); letter-spacing: 0.07em; font-weight: 800; }
+.band > .hints { top: auto; bottom: 3.4rem; left: 15.6rem; }
+.hints > span { display: inline-flex; align-items: center; gap: 0.8rem; }
+.g { display: inline-flex; flex: none; }
+.g svg { width: 3.5rem; height: 3.5rem; display: block; }
+.g.pill, .g.key {
+  box-sizing: border-box; height: 3.1rem; min-width: 3.4rem; padding: 0 0.9rem; align-items: center; justify-content: center;
+  border-radius: 0.9rem 0.9rem 0.55rem 0.55rem; background: #0f171f; box-shadow: inset 0 0 0 0.2rem #dfe7ec;
+  font-size: max(1.6rem, 11px); font-style: normal; font-weight: 900; letter-spacing: 0.04em; color: #fff; text-shadow: none;
+}
+.g.pill.opt { border-radius: 1.6rem; font-size: max(1.3rem, 10px); }
+.g.key { border-radius: 0.6rem; background: #eef3f6; color: #16212b; box-shadow: inset 0 -0.32rem 0 #b9c5cd; padding-bottom: 0.25rem; }
+.g + .g { margin-left: -0.3rem; }
+
+/* ── free plates on the right: the HUD plate (skewed slate, upright content) ── */
+.plate { position: absolute; }
+.plate::before {
+  content: ''; position: absolute; inset: 0; transform: skewX(var(--skew)); border-radius: 1.8rem;
+  background: var(--slate); border: max(1px, 0.18rem) solid var(--rim); opacity: 0.88;
+}
+.plate.sheet::before { transform: skewX(-4deg); border-radius: 2.2rem; }
+.plate > * { position: relative; }
+.kicker { font-size: var(--cap); letter-spacing: 0.2em; color: var(--cyan); font-weight: 800; }
+.chips { display: flex; gap: 0.9rem; }
+.chip { font-size: var(--cap); letter-spacing: 0.06em; padding: 0.7rem 1.3rem; border-radius: 0.8rem; background: rgba(174, 187, 194, 0.18); border: 0.14rem solid rgba(174, 187, 194, 0.5); transform: skewX(var(--skew)); }
+.chip > b { display: inline-block; transform: skewX(var(--unskew)); font-weight: 800; }
+.sticker {
+  position: absolute; font-size: 2.2rem; letter-spacing: 0.06em; line-height: 1.25; text-align: center;
+  padding: 1.1rem 1.9rem; border-radius: 1.1rem; background: var(--yellow); color: var(--ink); text-shadow: none;
+  border: 0.3rem solid #fff; transform: rotate(5deg); box-shadow: 0.5rem 0.6rem 0 rgba(8, 14, 20, 0.6);
+}
+.sticker small { display: block; font-size: max(1.5rem, 11px); letter-spacing: 0.1em; font-weight: 800; }
+svg.map { display: block; overflow: visible; }
+
+/* title: next-race plate */
+.next { right: 4.5rem; bottom: 3.6rem; width: 62rem; height: 16.6rem; }
+.next .in { display: grid; grid-template-columns: 13.5rem 1fr auto; column-gap: 2rem; align-items: center; height: 100%; padding: 0 4.4rem 0 4.6rem; box-sizing: border-box; }
+.next svg.map { width: 13.5rem; height: 13.5rem; }
+.next .big { font-size: 4.6rem; margin-top: 0.8rem; }
+.next .len { font-size: var(--cap); letter-spacing: 0.1em; font-weight: 800; margin-top: 0.9rem; color: #e9edef; }
+.next .best { text-align: right; }
+.next .best b { display: block; font-size: 3.4rem; color: var(--yellow); margin-top: 0.8rem; }
+.next .new { color: var(--yellow); }
+.unlock { position: absolute; right: 4.6rem; top: 3.4rem; }
+.unlock .chip { background: rgba(20, 30, 39, 0.82); }
+
+/* ── CAR ── */
+.cars { top: 23rem; width: 48rem; }
+.car-row { height: 8.8rem; justify-content: flex-start; padding-left: 1.8rem; gap: 1.8rem; }
+.paintchip { width: 6.2rem; height: 5.2rem; border-radius: 0.9rem; border: 0.26rem solid rgba(255, 255, 255, 0.85); box-sizing: border-box; flex: none; }
+.car-row .n { font-size: 3rem; display: block; }
+.car-row .s { font-size: var(--cap); letter-spacing: 0.1em; color: var(--cyan); display: block; margin-top: 0.75rem; font-weight: 800; }
+.car-row.focus .s { color: #33414c; }
+.car-row .tag { position: absolute; right: 1.6rem; top: -1.2rem; background: var(--slate); }
+.car-row.focus .paintchip { border-color: var(--ink); }
+.namecard { position: absolute; right: 7rem; top: 3.6rem; text-align: right; transform: rotate(-2.4deg); z-index: 2; }
+.namecard .name { font-size: 8.4rem; -webkit-text-stroke: 0.1em var(--ink); paint-order: stroke fill; text-shadow: 0.05em 0.06em 0 var(--yellow), 0.09em 0.1em 0 var(--ink); }
+.badge { display: inline-block; font-size: 2.3rem; letter-spacing: 0.08em; padding: 0.9rem 1.8rem; border-radius: 1rem; background: var(--cyan); color: var(--ink); text-shadow: none; transform: rotate(4deg) skewX(var(--skew)); box-shadow: 0.5rem 0.5rem 0 rgba(8, 14, 20, 0.55); border: 0.28rem solid #fff; margin-top: 0.6rem; }
+.badge b { display: inline-block; transform: skewX(var(--unskew)); }
+.spec { right: 3.6rem; top: 21rem; width: 37rem; height: 66rem; }
+.spec .in { padding: 3rem 3rem 0 3.4rem; }
+.spec .desc { font-size: 2.2rem; font-weight: 800; line-height: 1.38; white-space: normal; color: #e9edef; margin-top: 1.3rem; }
+.stats { margin-top: 2.6rem; border-top: 0.16rem solid rgba(174, 187, 194, 0.5); padding-top: 2.2rem; }
+.stat { display: flex; align-items: center; justify-content: space-between; font-size: var(--cap); letter-spacing: 0.1em; margin-bottom: 1.5rem; font-weight: 800; }
+.stat .pips i { width: 2.7rem; height: 1.8rem; }
+.stat em { font-style: inherit; opacity: 0.62; margin-left: 0.8em; letter-spacing: 0.04em; }
+.paint { margin-top: 1.2rem; border-top: 0.16rem solid rgba(174, 187, 194, 0.5); padding-top: 2.2rem; }
+.paint .kicker { display: flex; justify-content: space-between; }
+.paint .kicker b { color: #fff; font-weight: 900; }
+.paints { display: flex; gap: 1rem; margin-top: 1.4rem; align-items: center; justify-content: space-between; }
+.paints i.p { width: 5.6rem; height: 4.4rem; border-radius: 0.9rem; transform: skewX(var(--skew)); border: 0.26rem solid rgba(255, 255, 255, 0.55); box-sizing: border-box; }
+.paints i.p.sel { border: 0.4rem solid var(--cyan); box-shadow: 0 0 0 0.3rem var(--ink), 0 0 0 0.52rem var(--cyan); }
+.paints .ar { color: #fff; opacity: 0.8; }
+.pname { font-size: 2.8rem; margin-top: 1.4rem; text-align: center; }
+.spec .note { font-size: var(--cap); font-weight: 800; letter-spacing: 0.06em; line-height: 1.4; white-space: normal; color: #cfd8dd; margin-top: 2.4rem; }
+.spec .note b { color: var(--yellow); font-weight: 900; }
+
+/* ── SETUP / SETTINGS ── */
+.fields { top: 20.6rem; width: 57rem; }
+.ticket { right: 5.5rem; top: 9rem; width: 52rem; height: 72rem; }
+.ticket .in { padding: 3.4rem 3.6rem 0 6.4rem; }
+.ticket .big { font-size: 6.2rem; margin-top: 1rem; }
+.ticket svg.map { width: 41rem; height: 41rem; margin: 1.4rem 0 0 -0.6rem; }
+.ticket .chips { margin-top: 1.8rem; margin-left: -1.6rem; flex-wrap: wrap; width: 44rem; }
+.ticket .sticker { right: -1.6rem; top: -2.6rem; }
+
+/* ── CONTROLS ── */
+.tips { top: 21.5rem; width: 42rem; margin: 0; padding: 0; list-style: none; }
+.tips li { font-size: 2.3rem; font-weight: 800; line-height: 1.36; white-space: normal; color: #e9edef; margin-bottom: 2.2rem; padding-left: 3.2rem; position: relative; }
+.tips li::before { content: ''; position: absolute; left: 0; top: 0.7rem; width: 1.4rem; height: 1.8rem; background: var(--cyan); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.tips li b { color: var(--yellow); font-weight: 900; }
+.sheetc { right: 5rem; top: 11rem; width: 82rem; height: 66rem; }
+.sheetc .in { padding: 3.2rem 4.4rem 0 6.6rem; }
+.ctl { display: grid; grid-template-columns: 1.25fr 1fr 1fr; align-items: center; height: 6.9rem; border-top: 0.14rem solid rgba(174, 187, 194, 0.32); font-size: 2.8rem; }
+.ctl.hd { height: 4.6rem; border-top: 0; }
+.ctl.hd span { font-size: var(--cap); letter-spacing: 0.2em; color: var(--cyan); font-weight: 800; }
+.ctl > span { display: inline-flex; align-items: center; gap: 0.7rem; }
+.ctl small { font-size: var(--cap); font-weight: 800; letter-spacing: 0.06em; opacity: 0.75; margin-left: 0.5rem; }
+.ctl .g svg { width: 4.2rem; height: 4.2rem; }
+.ctl .g.pill, .ctl .g.key { height: 3.8rem; min-width: 4rem; font-size: max(1.9rem, 12px); }
+.ctl .g.pill.opt { font-size: max(1.5rem, 11px); }
+.ctl .g + .g { margin-left: 0; }
+
+/* ── PAUSE / CONFIRM ── */
+.pause-menu { top: 24rem; width: 39rem; }
+.pause-menu .row { height: 5.9rem; margin-bottom: 0.9rem; }
+.pause-menu .row .l { font-size: 2.9rem; }
+.confirm-menu { top: 44rem; width: 39rem; }
+
+/* ── POST: the HUD's own finish panel (Hud.ts numbers, HUD em) + medal + action stack ── */
+.hud { position: absolute; inset: 0; font-size: min(1.0627vh, 1.5625vw); font-weight: 800; text-shadow: -0.02em 0.03em 0 #8d98a0, 0.035em 0.055em 0 rgba(8, 14, 20, 0.6), 0 0.09em 0.22em rgba(8, 14, 20, 0.35); }
+.hud > div { position: absolute; }
+.hud .x { display: inline-block; transform: scaleX(1.08); }
+.hud .hp { position: absolute; inset: 0; box-sizing: border-box; transform: skewX(-10deg); border-radius: 1.6em; background: var(--slate); border: max(1px, 0.16em) solid var(--rim); opacity: 0.73; }
+.hud .tl { left: 2.6em; top: 2.2em; width: 18.4em; height: 10em; }
+.hud .tl .big { position: absolute; left: 0.25em; right: 0; top: 0.72em; text-align: center; } .hud .tl .big > span { font-size: 5.9em; }
+.hud .tl .lab { position: absolute; left: 0; right: 0.75em; top: 6.6em; text-align: center; color: #e9edef; } .hud .tl .lab > span { font-size: 2.05em; letter-spacing: 0.06em; }
+.hud .tr { right: 1.68em; top: 3.1em; width: 18.55em; height: 5.4em; } .hud .tr .hp { border-radius: 1.5em; }
+.hud .tr .r { position: absolute; left: 0; right: 0; top: 0.98em; text-align: center; } .hud .tr .w { font-size: 2.95em; margin-right: 0.3em; } .hud .tr .n { font-size: 3.4em; }
+.hud .slash { display: inline-block; font-size: 0.8em; font-weight: 700; margin: 0 0.26em; position: relative; top: -0.07em; }
+.hud .fin { left: 50%; top: 50%; width: 46em; margin-left: -23em; transform: translateY(-50%); }
+.hud .fin .hp { opacity: 0.88; border-radius: 2.2em; transform: skewX(-4deg); }
+.hud .fin .body { position: relative; padding: 2.6em 4.2em 2.8em; text-align: center; }
+.hud .fin .title { font-size: 7em; font-weight: 900; letter-spacing: 0.03em; }
+.hud .fin .place { font-size: 3em; margin-top: 0.45em; color: #ffe14a; }
+.hud .fin .total { font-size: 4.6em; margin-top: 0.5em; }
+.hud .fin b { font-weight: inherit; opacity: 0.62; margin-right: 0.6em; letter-spacing: 0.04em; }
+.hud .fin .laps { margin: 1.5em auto 0; width: 30em; border-top: max(1px, 0.14em) solid rgba(174, 187, 194, 0.5); padding-top: 1.1em; }
+.hud .fin .lap { font-size: 2.6em; display: flex; justify-content: space-between; margin-top: 0.34em; }
+.hud .fin .lap.best { color: var(--cyan); }
+.hud .fin .record { font-size: 2.3em; margin-top: 0.9em; color: #ffe14a; }
+.post { position: absolute; inset: 0; font-size: min(1.0627vh, 1.5625vw); }
+.medal {
+  position: absolute; left: calc(50% - 35.5em); top: calc(50% - 25em); width: 17em; height: 17em; border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, #3d66de, var(--cobalt) 70%); border: 1em solid var(--cream);
+  box-shadow: 0 0 0 0.36em var(--ink), 0.7em 0.9em 0 rgba(8, 14, 20, 0.55); transform: rotate(-9deg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;
+}
+.medal b { font-size: 7em; color: var(--yellow); -webkit-text-stroke: 0.09em var(--ink); paint-order: stroke fill; text-shadow: 0.05em 0.06em 0 var(--ink); }
+.medal b sup { font-size: 0.42em; vertical-align: 0.9em; margin-left: 0.05em; }
+.medal span { font-size: 1.7em; letter-spacing: 0.18em; margin-top: 0.2em; }
+.actions { position: absolute; left: calc(50% + 28.5em); top: 50%; width: 34em; margin: 0; padding: 0; list-style: none; transform: translateY(-50%) skewX(var(--skew)); }
+.actions .row { font-size: 1em; height: 7.4em; margin-bottom: 1.1em; border-radius: 1.3em; border-width: 0.18em; padding: 0 2em 0 2.4em; background: rgba(20, 30, 39, 0.88); border-color: var(--rim); flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; }
+.actions .row .l { font-size: 3.1em; }
+.actions .row .v { font-size: max(1.85em, 12px); margin: 0.6em 0 0; }
+.actions .row.primary { height: 9.6em; }
+.actions .row.primary .l { font-size: 4.3em; }
+.actions .row.focus { background: var(--yellow); border: 0.34em solid #fff; transform: translateX(2.2em); box-shadow: 0.7em 0.7em 0 rgba(8, 14, 20, 0.6); }
+.actions .row.focus::before { left: -4em; width: 2.2em; height: 2.8em; margin-top: -1.4em; }
+.float-hints { position: absolute; left: 0; right: 0; bottom: 3.2rem; display: flex; justify-content: center; }
+.float-hints .hints { padding: 1rem 2.4rem; border-radius: 1.2rem; background: rgba(20, 30, 39, 0.86); }
+
+/* ── narrow / portrait: the band is the page, right-hand plates drop out ── */
+@media (max-aspect-ratio: 5/4) {
+  html { font-size: min(1.0627vh, 1.5vw); }
+  .aside { display: none; }
+  .band, .band.slim { width: 68rem; } .band.wide { width: 76rem; }
+  .medal { display: none; }
+  .hud .fin { top: 42%; }
+  .actions { left: 50%; top: auto; bottom: 10em; width: 60em; margin-left: -30em; transform: skewX(var(--skew)); display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+  .actions .row.focus { transform: none; }
+  .actions .row, .actions .row.primary { height: 8em; margin: 0; } .actions .row.primary .l { font-size: 3.1em; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═════════ TITLE ═════════ -->
+<section class="screen" data-screen="title">
+  <div class="bg" style="background-image:url(arcade-clean-chase.png)"></div>
+  <div class="bg shift" style="background-image:url(arcade-clean-chase.png)"></div>
+  <div class="band">
+    <div class="logo">
+      <span class="t web">WEB</span>
+      <span class="t racer">RACER</span>
+      <div class="checker"></div>
+      <div class="tagline"><span class="t">TOY BUGGY GRAND PRIX</span></div>
+    </div>
+    <ul class="menu" style="top:35rem;width:48.5rem">
+      <li class="row primary focus"><span class="top"><span class="t l">RACE</span><span class="t v chev"><i class="ar big"></i><i class="ar big"></i></span></span><span class="t sub" data-clean>TRACK 16 · 3 LAPS · 3 RIVALS · NORMAL</span><span class="t sub" data-staged>TRACK 27 · 5 LAPS · NEW WORLD</span></li>
+      <li class="row"><span class="t l">CAR</span><span class="t v"><i class="swatch"></i>REEF ROCKET</span></li>
+      <li class="row"><span class="t l">RACE SETUP</span><span class="t tag was" data-staged>2 NEW</span><span class="t v" data-clean>TRACK 16</span><span class="t v" data-staged style="color:var(--yellow)">TRACK 27</span></li>
+      <li class="row"><span class="t l">SETTINGS</span><span class="t v">CHASE CAM</span></li>
+      <li class="row"><span class="t l">CONTROLS</span></li>
+    </ul>
+    <div class="help t" data-clean>Start the race on this track.</div>
+    <div class="help t" data-staged>Builds track 27, then starts the race.</div>
+    <div class="hints t">
+      <span><i g="nav"></i>MOVE</span>
+      <span><i g="cross"></i>SELECT</span>
+      <span data-staged><i g="square"></i>UNDO</span>
+    </div>
+  </div>
+  <div class="plate next aside">
+    <div class="in">
+      <svg class="map" viewBox="-72 -72 144 144" fill="none" stroke-linecap="round" stroke-linejoin="round" data-map="16"></svg>
+      <div><div class="kicker">NEXT RACE</div><div class="big" data-clean>TRACK 16</div><div class="big new" data-staged>TRACK 27</div><div class="len" data-clean>593 M · 3 LAPS</div><div class="len" data-staged>NEW · 5 LAPS</div></div>
+      <div class="best"><span class="kicker">BEST LAP</span><b data-clean>0:31.42</b><b data-staged style="color:#e9edef">– : – –</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ CAR ═════════ -->
+<section class="screen" data-screen="car">
+  <div class="bg" style="background-image:url(final-bg-comet.png)"></div>
+  <div class="bg shift" style="background-image:url(final-bg-comet.png);right:-6%;bottom:-6%;left:9%"></div>
+  <div class="band">
+    <div class="head"><span class="t crumb">TITLE &nbsp;/&nbsp; CAR</span><span class="t h">PICK YOUR<br>BUGGY</span></div>
+    <ul class="menu cars">
+      <li class="row car-row"><i class="paintchip" style="background:linear-gradient(100deg,#1cafae 58%,#f16b59 58%)"></i><span class="t"><span class="n">REEF ROCKET</span><span class="s">ALL-ROUNDER · 810 KG</span></span><span class="t tag live">ON THE GRID</span></li>
+      <li class="row car-row"><i class="paintchip" style="background:linear-gradient(100deg,#e6f400 58%,#7a3fd0 58%)"></i><span class="t"><span class="n">NEON WASP</span><span class="s">AGILE · 730 KG</span></span></li>
+      <li class="row car-row"><i class="paintchip" style="background:linear-gradient(100deg,#3153ba 58%,#f08a2c 58%)"></i><span class="t"><span class="n">RIOT RAM</span><span class="s">PLANTED · 973 KG</span></span></li>
+      <li class="row car-row focus"><i class="paintchip" style="background:linear-gradient(100deg,#f12532 58%,#1fa79b 58%)"></i><span class="t"><span class="n">COMET FOX</span><span class="s">FAST · 892 KG</span></span></li>
+    </ul>
+    <div class="help t">Left and right change the paint.</div>
+    <div class="hints t">
+      <span><i g="nav"></i>CAR</span>
+      <span><i g="lr"></i>PAINT</span>
+      <span><i g="cross"></i>CHOOSE</span>
+      <span><i g="circle"></i>BACK</span>
+    </div>
+  </div>
+  <div class="namecard aside"><div class="name">COMET FOX</div><div class="badge"><b>FAST</b></div></div>
+  <div class="plate sheet spec aside">
+    <div class="in">
+      <div class="desc" style="margin-top:0">Long, stable and the quickest in a straight line. Huge traction; set it up early for corners.</div>
+      <div class="stats">
+        <div class="stat"><span>SPEED</span><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+        <div class="stat"><span>GRIP</span><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+        <div class="stat"><span>AGILITY</span><span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+        <div class="stat"><span>WEIGHT</span><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+      </div>
+      <div class="paint">
+        <div class="kicker"><span>PAINT</span><span>1 / 4</span></div>
+        <div class="paints">
+          <i class="ar l"></i>
+          <i class="p sel" style="background:linear-gradient(100deg,#f12532 58%,#1fa79b 58%)"></i>
+          <i class="p" style="background:linear-gradient(100deg,#3153ba 58%,#e5ab35 58%)"></i>
+          <i class="p" style="background:linear-gradient(100deg,#f4e3c4 58%,#1cafae 58%)"></i>
+          <i class="p" style="background:linear-gradient(100deg,#139b68 58%,#a694e6 58%)"></i>
+          <i class="ar"></i>
+        </div>
+        <div class="pname">VERMILION</div>
+      </div>
+      <div class="note"><b>CHOOSE</b> puts it on the grid for your next race. The paint shows once the new grid is built.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ RACE SETUP ═════════ -->
+<section class="screen" data-screen="setup">
+  <div class="bg" style="background-image:url(arcade-clean-chase.png)"></div>
+  <div class="bg shift" style="background-image:url(arcade-clean-chase.png);right:-24%;bottom:-24%"></div>
+  <div class="band wide">
+    <div class="head"><span class="t crumb">TITLE &nbsp;/&nbsp; RACE SETUP</span><span class="t h">RACE SETUP</span></div>
+    <ul class="menu fields">
+      <li class="row"><span class="t l">TRACK</span><span class="t tag was">WAS 16</span><span class="t v step"><i class="ar l"></i><b>27</b><i class="ar"></i></span></li>
+      <li class="row focus"><span class="t l">LAPS</span><span class="t tag was">WAS 3</span><span class="t v step"><i class="ar l"></i><b>5</b><i class="ar"></i></span></li>
+      <li class="row"><span class="t l">RIVALS</span><span class="t v seg"><b>0</b><b>1</b><b>2</b><b class="sel">3</b></span></li>
+      <li class="row"><span class="t l">DIFFICULTY</span><span class="t v seg"><b>EASY</b><b class="sel">NORMAL</b><b>HARD</b></span></li>
+      <li class="row go gap"><span class="t l">START RACE</span><span class="t v" style="text-align:right;line-height:1.35;display:block">2 CHANGES<br>LOADS A NEW WORLD</span></li>
+    </ul>
+    <div class="help t">1 to 99 laps. One step below 1 is ENDLESS.</div>
+    <div class="hints t">
+      <span><i g="nav"></i>MOVE</span>
+      <span><i g="lr"></i>CHANGE</span>
+      <span><i g="square"></i>UNDO</span>
+      <span><i g="circle"></i>BACK</span>
+    </div>
+  </div>
+  <div class="plate sheet ticket aside">
+    <div class="in">
+      <div class="kicker">TRACK PREVIEW</div>
+      <div class="big">TRACK 27</div>
+      <svg class="map" viewBox="-72 -72 144 144" fill="none" stroke-linecap="round" stroke-linejoin="round" data-map="27"></svg>
+      <div class="chips"><div class="chip"><b>544 M</b></div><div class="chip"><b>5 LAPS · 2.7 KM</b></div><div class="chip"><b>NO BEST LAP YET</b></div></div>
+    </div>
+    <div class="sticker">NEW TRACK<small>BUILT WHEN YOU START</small></div>
+  </div>
+</section>
+
+<!-- ═════════ SETTINGS ═════════ -->
+<section class="screen" data-screen="settings">
+  <div class="bg" style="background-image:url(arcade-clean-chase.png)"></div>
+  <div class="bg shift" style="background-image:url(arcade-clean-chase.png);right:-24%;bottom:-24%"></div>
+  <div class="band wide">
+    <div class="head"><span class="t crumb">TITLE &nbsp;/&nbsp; SETTINGS</span><span class="t h">SETTINGS</span></div>
+    <ul class="menu fields">
+      <li class="row focus"><span class="t l">CAMERA</span><span class="t v seg"><b class="sel">CHASE</b><b>HIGH</b><b>DIORAMA</b></span></li>
+      <li class="row"><span class="t l">MUSIC</span><span class="t v"><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><b style="font-size:2.6rem;min-width:3.4rem;text-align:right">7</b></span></li>
+      <li class="row"><span class="t l">QUALITY</span><span class="t v seg"><b class="sel">HIGH</b><b>QUEST</b></span></li>
+    </ul>
+    <div class="help t">Changes at once: look past the menu.</div>
+    <div class="hints t">
+      <span><i g="nav"></i>MOVE</span>
+      <span><i g="lr"></i>CHANGE</span>
+      <span><i g="circle"></i>BACK</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ CONTROLS ═════════ -->
+<section class="screen" data-screen="controls">
+  <div class="bg" style="background-image:url(arcade-clean-chase.png)"></div>
+  <div class="bg shift" style="background-image:url(arcade-clean-chase.png)"></div>
+  <div class="band">
+    <div class="head"><span class="t crumb">TITLE &nbsp;/&nbsp; CONTROLS</span><span class="t h">CONTROLS</span></div>
+    <ul class="tips">
+      <li><span class="t">Hold <b>BRAKE</b> at a standstill to reverse.</span></li>
+      <li><span class="t"><b>RESET</b> puts you back on the road, facing the right way.</span></li>
+      <li><span class="t">Cut a corner and the lap does not count until you rejoin.</span></li>
+      <li><span class="t">Restart and quit are in the <b>PAUSE</b> menu.</span></li>
+    </ul>
+    <div class="hints t">
+      <span><i g="circle"></i>BACK</span>
+    </div>
+  </div>
+  <div class="plate sheet sheetc aside">
+    <div class="in">
+      <div class="ctl hd"><span>ACTION</span><span>GAMEPAD</span><span>KEYBOARD</span></div>
+      <div class="ctl"><span>STEER</span><span><i g="stick" f></i><small>LEFT STICK</small></span><span><i k="A"></i><i k="D"></i><small>OR</small><i k="&larr;"></i><i k="&rarr;"></i></span></div>
+      <div class="ctl"><span>THROTTLE</span><span><i g="r2" f></i></span><span><i k="W"></i><small>OR</small><i k="&uarr;"></i></span></div>
+      <div class="ctl"><span>BRAKE / REVERSE</span><span><i g="l2" f></i></span><span><i k="S"></i><small>OR</small><i k="&darr;"></i></span></div>
+      <div class="ctl"><span>RESET CAR</span><span><i g="circle" f></i></span><span><i k="R"></i></span></div>
+      <div class="ctl"><span>CAMERA</span><span><i g="triangle" f></i></span><span><i k="C"></i></span></div>
+      <div class="ctl"><span>PAUSE</span><span><i g="options" f></i></span><span><i k="ESC"></i><small>OR</small><i k="P"></i></span></div>
+      <div class="ctl"><span>MUSIC ON / OFF</span><span><small style="margin:0">IN THE MENU</small></span><span><i k="M"></i></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ PAUSE ═════════ -->
+<section class="screen" data-screen="pause">
+  <div class="bg" style="background-image:url(native-backdrop-race.png);filter:saturate(.72)"></div>
+  <div class="bg shift" style="background-image:url(native-backdrop-race.png);filter:saturate(.72);right:-8%;bottom:-8%;left:6%"></div>
+  <div class="tint"></div>
+  <div class="band slim">
+    <div class="head big"><span class="t crumb">LAP 2 / 3 &nbsp;·&nbsp; 2ND OF 4</span><span class="t h">PAUSED</span></div>
+    <ul class="menu pause-menu">
+      <li class="row focus"><span class="t l">RESUME</span><span class="t v chev"><i class="ar"></i><i class="ar"></i></span></li>
+      <li class="row"><span class="t l">RESTART RACE</span></li>
+      <li class="row"><span class="t l">CAMERA</span><span class="t v step"><i class="ar l"></i><b style="font-size:2.4rem;min-width:0">CHASE</b><i class="ar"></i></span></li>
+      <li class="row"><span class="t l">MUSIC</span><span class="t v"><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></span></li>
+      <li class="row"><span class="t l">SETTINGS</span></li>
+      <li class="row"><span class="t l">CONTROLS</span></li>
+      <li class="row danger"><span class="t l">QUIT TO TITLE</span></li>
+    </ul>
+    <div class="help t">Carry on where you left off.</div>
+    <div class="hints t">
+      <span><i g="cross"></i>SELECT</span>
+      <span><i g="options"></i>RESUME</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ CONFIRM (in the band, no extra layer) ═════════ -->
+<section class="screen" data-screen="confirm">
+  <div class="bg" style="background-image:url(native-backdrop-race.png);filter:saturate(.72)"></div>
+  <div class="bg shift" style="background-image:url(native-backdrop-race.png);filter:saturate(.72);right:-8%;bottom:-8%;left:6%"></div>
+  <div class="tint"></div>
+  <div class="band slim">
+    <div class="head big"><span class="t crumb">PAUSED &nbsp;/&nbsp; QUIT TO TITLE</span><span class="t h">QUIT?</span>
+      <span class="t say">This race ends here: lap 2 of 3, running 2nd. Your best lap on Track 16 is kept.</span></div>
+    <ul class="menu confirm-menu">
+      <li class="row focus" style="height:7.4rem"><span class="t l">KEEP RACING</span><span class="t v chev"><i class="ar"></i><i class="ar"></i></span></li>
+      <li class="row danger" style="height:7.4rem"><span class="t l">QUIT TO TITLE</span></li>
+    </ul>
+    <div class="hints t">
+      <span><i g="nav"></i>MOVE</span>
+      <span><i g="cross"></i>SELECT</span>
+      <span><i g="circle"></i>BACK</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ POST-RACE ═════════ -->
+<section class="screen" data-screen="post">
+  <div class="bg" style="background-image:url(native-backdrop-race.png)"></div>
+  <div class="tint" style="background:rgba(11,20,28,.16)"></div>
+  <!-- the race HUD as it is today: position plate, lap plate, finish panel (unchanged) -->
+  <div class="hud">
+    <div class="tl"><div class="hp"></div><div class="big"><span class="x">2<span class="slash">/</span>4</span></div><div class="lab"><span class="x">POSITION</span></div></div>
+    <div class="tr"><div class="hp"></div><div class="r"><span class="x"><span class="w">LAP</span><span class="n">3<span class="slash">/</span>3</span></span></div></div>
+    <div class="fin"><div class="hp"></div><div class="body">
+      <div class="title"><span class="x">FINISH</span></div>
+      <div class="place"><span class="x">2ND OF 4</span></div>
+      <div class="total"><span class="x"><b>TOTAL</b>1:38.27</span></div>
+      <div class="laps">
+        <div class="lap"><span>LAP 1</span><span>0:33.10</span></div>
+        <div class="lap best"><span>LAP 2</span><span>0:31.07</span></div>
+        <div class="lap"><span>LAP 3</span><span>0:32.76</span></div>
+      </div>
+      <div class="record"><span class="x">NEW BEST LAP 0:31.07</span></div>
+    </div></div>
+  </div>
+  <!-- what the menu adds: medal + action stack + prompts -->
+  <div class="post">
+    <div class="medal"><b>2<sup>ND</sup></b><span>PLACE</span></div>
+    <ul class="actions">
+      <li class="row primary focus"><span class="t l">RACE AGAIN</span><span class="t v">TRACK 16 · SAME GRID</span></li>
+      <li class="row"><span class="t l">NEXT TRACK</span><span class="t v">TRACK 17 · NEW WORLD</span></li>
+      <li class="row"><span class="t l">CHANGE CAR</span><span class="t v"><i class="swatch"></i>REEF ROCKET</span></li>
+      <li class="row"><span class="t l">TITLE</span><span class="t v">MAIN MENU</span></li>
+    </ul>
+  </div>
+  <div class="float-hints"><div class="hints">
+    <span><i g="nav"></i>MOVE</span>
+    <span><i g="cross"></i>SELECT</span>
+    <span><i g="circle"></i>TITLE</span>
+  </div></div>
+</section>
+
+<script>
+  var q = new URLSearchParams(location.search);
+  var kb = q.get('prompts') === 'kb';
+  // ── DualShock glyphs (inline SVG) and their keyboard twins ──
+  var face = function (sym) { return '<span class="g"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#0f171f" stroke="#dfe7ec" stroke-width="2.4"/>' + sym + '</svg></span>'; };
+  var dpad = function (lr, ud) { return '<span class="g"><svg viewBox="0 0 40 40"><path d="M15 3h10v12h12v10H25v12H15V25H3V15h12z" fill="#0f171f" stroke="#dfe7ec" stroke-width="2.4" stroke-linejoin="round"/>' +
+    (ud ? '<path d="M20 6l4 6h-8zM20 34l4-6h-8z" fill="#14e8f6"/>' : '') + (lr ? '<path d="M6 20l6-4v8zM34 20l-6-4v8z" fill="#14e8f6"/>' : '') + '</svg></span>'; };
+  var pill = function (t, c) { return '<span class="g pill ' + (c || '') + '">' + t + '</span>'; };
+  var key = function (t) { return '<span class="g key">' + t + '</span>'; };
+  var G = {
+    cross: face('<path d="M13 13l14 14M27 13L13 27" stroke="#8fb8ff" stroke-width="3.4" stroke-linecap="round"/>'),
+    circle: face('<circle cx="20" cy="20" r="8" fill="none" stroke="#ff7482" stroke-width="3.2"/>'),
+    triangle: face('<path d="M20 11l9 15H11z" fill="none" stroke="#49e6b4" stroke-width="3.2" stroke-linejoin="round"/>'),
+    square: face('<rect x="12.5" y="12.5" width="15" height="15" rx="1.5" fill="none" stroke="#f3a3dc" stroke-width="3.2"/>'),
+    stick: face('<circle cx="20" cy="20" r="9" fill="#dfe7ec"/><text x="20" y="24.5" text-anchor="middle" font-size="12" font-weight="900" font-family="system-ui" fill="#0f171f">L</text>'),
+    nav: dpad(false, true), lr: dpad(true, false),
+    l2: pill('L2'), r2: pill('R2'), options: pill('OPTIONS', 'opt')
+  };
+  var K = { cross: key('ENTER'), circle: key('ESC'), triangle: key('R'), square: key('DEL'), nav: key('&uarr;') + key('&darr;'), lr: key('&larr;') + key('&rarr;'), options: key('ESC') };
+  document.querySelectorAll('i[g]').forEach(function (el) {
+    var n = el.getAttribute('g');
+    el.outerHTML = (kb && !el.hasAttribute('f') && K[n]) || G[n];
+  });
+  document.querySelectorAll('i[k]').forEach(function (el) { el.outerHTML = key(el.getAttribute('k')); });
+
+  // ── real track outlines (src/terrain/track.ts, every 4th point; x right, +z up; start line at 0,0 heading up) ──
+  var TRACKS = {
+    16: 'M0 0L0 -48L1 -52L4 -55L7 -57L11 -59L15 -59L19 -59L23 -60L27 -60L31 -59L34 -58L38 -56L40 -53L42 -49L43 -45L45 -42L46 -38L47 -34L49 -30L50 -26L51 -23L53 -19L54 -15L55 -11L56 -7L57 -4L57 0L57 4L56 8L56 12L55 16L54 20L53 24L52 28L51 32L50 36L49 39L47 43L44 46L41 48L37 50L34 51L30 52L26 53L22 54L18 55L14 56L10 57L6 58L3 59L-1 60L-5 61L-9 62L-13 62L-17 62L-21 62L-25 61L-29 61L-33 60L-37 59L-41 59L-45 58L-48 56L-52 54L-55 51L-57 48L-58 44L-59 40L-59 36L-59 32L-59 28L-60 24L-60 20L-60 16L-60 12L-60 8L-60 4L-61 0L-61 -28L-60 -32L-60 -44L-59 -48L-59 -52L-57 -55L-55 -58L-51 -60L-47 -61L-43 -61L-39 -61L-35 -59L-32 -57L-30 -54L-29 -50L-28 -46L-28 18L-27 22L-27 30L-25 34L-23 37L-19 39L-15 39L-11 39L-7 38L-4 36L-2 33L0 29L0 25Z',
+    27: 'M0 0L0 -48L2 -52L4 -55L8 -57L11 -58L15 -58L19 -58L23 -57L26 -54L28 -51L30 -47L30 -43L30 -27L31 -23L32 -20L35 -17L39 -15L42 -13L46 -11L49 -9L53 -7L56 -5L58 -1L59 2L59 6L59 18L58 22L58 34L57 38L56 42L54 45L51 48L48 51L44 53L41 54L37 54L33 55L29 56L25 56L21 57L17 58L13 59L9 59L5 60L1 61L-3 61L-19 61L-23 60L-27 59L-31 58L-35 58L-38 57L-42 56L-46 55L-49 52L-52 50L-55 46L-56 43L-57 39L-57 31L-58 27L-58 15L-59 11L-59 -9L-58 -13L-58 -17L-57 -21L-57 -25L-56 -29L-54 -32L-51 -35L-47 -36L-43 -36L-39 -35L-36 -33L-34 -29L-32 -26L-30 -22L-29 -19L-28 -15L-28 13L-29 17L-29 29L-27 33L-25 36L-22 38L-18 39L-14 39L-10 39L-6 38L-3 35L-1 32L0 28L0 24Z'
+  };
+  if (q.get('staged') === '1') document.querySelector('.next svg').setAttribute('data-map', '27');
+  document.querySelectorAll('svg[data-map]').forEach(function (svg) {
+    var d = TRACKS[svg.getAttribute('data-map')];
+    svg.innerHTML =
+      '<path d="' + d + '" stroke="#0b141c" stroke-width="13"/>' +
+      '<path d="' + d + '" stroke="#aebbc2" stroke-width="9.6"/>' +
+      '<path d="' + d + '" stroke="#141e27" stroke-width="7"/>' +
+      '<path d="' + d + '" stroke="#14e8f6" stroke-width="1.2" stroke-dasharray="3.5 4.5"/>' +
+      '<path d="M-6 0H6" stroke="#fff" stroke-width="3" stroke-linecap="butt"/>' +
+      '<path d="M-3.4 -9L0 -14L3.4 -9" stroke="#ffe14a" stroke-width="2.2"/>' +
+      '<circle cx="0" cy="9" r="3.4" fill="#ffe14a" stroke="#0b141c" stroke-width="1.3"/>';
+  });
+
+  var staged = q.get('staged') === '1';
+  document.querySelectorAll(staged ? '[data-clean]' : '[data-staged]').forEach(function (el) { el.remove(); });
+  var s = q.get('screen') || 'title';
+  var el = document.querySelector('[data-screen="' + s + '"]') || document.querySelector('[data-screen="title"]');
+  el.classList.add('on');
+</script>
+</body>
+</html>

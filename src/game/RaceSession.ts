@@ -37,6 +37,16 @@ import type { CarSample, RaceEvent } from './RaceState';
  * again) → `car.place` → `field.respawned` → `onRespawn(id)` (the game snaps
  * its camera for the player).
  *
+ * HOLD and MENU LOCK (the game menu, design-documents/menu-mockups/SPEC.md
+ * 5 / 7): `setHeld(true)` freezes the race where it stands — `afterPhysics`
+ * hands `race.update` a dt of 0, so the countdown does not move, input stays
+ * locked and the field stays held (no GO), while the respawn rules keep
+ * working with the real dt. The title screen holds a fresh grid this way; a
+ * session built with `held: true` (a menu page) starts held, so the 3-2-1
+ * never runs under the loading panel. `menuLocked` gates the player's input
+ * to zero on top of `race.inputLocked` (title, pause, the post-race stack).
+ * Neither is ever set on a page without the menu: its races are unchanged.
+ *
  * Best laps are stored in the browser only for a human driving the stock
  * car (no autopilot, no `?tune=`, the primary vehicle model); any other run
  * keeps them in memory for the session.
@@ -59,6 +69,8 @@ export interface RaceSessionDeps {
   /** Asked before a best lap is written to web storage: false once the car
    * is no longer stock (a tuning slider moved). Default: always true. */
   canStoreBest?: () => boolean;
+  /** Start held (`setHeld(true)`): a page with the game menu. Default false. */
+  held?: boolean;
 }
 
 /** Why a car was put back on the road (counted per car). */
@@ -111,6 +123,9 @@ export class RaceSession {
   readonly maxRespawnsPerLap: Record<string, number> = {};
   /** Replaceable (the game re-creates the HUD when the dev overlay shows). */
   hud: Hud | null;
+  /** A menu is open (title, pause, post-race stack): `gate()` hands the
+   * player's car zero input, like `race.inputLocked` does in the 3-2-1. */
+  menuLocked = false;
 
   private readonly entries: Entry[] = [];
   private readonly samples: CarSample[] = [];
@@ -122,6 +137,7 @@ export class RaceSession {
   private actions: Readonly<GameActions> | null = null;
   private time = 0;
   private disposed = false;
+  private heldValue: boolean;
   private readonly point: Vec3Like = { x: 0, y: 0, z: 0 };
 
   constructor(deps: RaceSessionDeps) {
@@ -132,6 +148,7 @@ export class RaceSession {
     this.hud = deps.hud;
     this.onRespawn = deps.onRespawn ?? null;
     this.onRestart = deps.onRestart ?? null;
+    this.heldValue = deps.held === true;
     const heightAt = deps.ground.heightAt;
     const o = deps.options;
     // Only a human on the stock car sets the all-time best lap: an autopilot
@@ -153,13 +170,31 @@ export class RaceSession {
     if (deps.cars.length > 0) throw new Error('RaceSession: enter cars with addCar(car, gridPose)');
   }
 
-  /** The player's input must be read through this: zero while the countdown runs. */
+  /** The player's input must be read through this: zero while the countdown
+   * runs and while a menu is open (`menuLocked`). */
   gate(input: InputProvider): InputProvider {
     return {
       name: input.name,
       isActive: () => input.isActive(),
-      poll: () => (this.race.inputLocked ? ZERO_INTENT : input.poll()),
+      poll: () => (this.race.inputLocked || this.menuLocked ? ZERO_INTENT : input.poll()),
     };
+  }
+
+  /** Is the race held (see the header)? */
+  get held(): boolean {
+    return this.heldValue;
+  }
+
+  /**
+   * Hold the race where it stands (true) or let it run again (false). Held,
+   * `afterPhysics` advances the race by 0 s: a countdown does not move and
+   * never reaches GO, so the rivals stay held and the player's input stays
+   * locked. Physics, vehicles and respawns go on as usual. The menu holds a
+   * fresh grid (`restart()` then `setHeld(true)`) and releases it before
+   * `restart()` starts the race.
+   */
+  setHeld(on: boolean): void {
+    this.heldValue = on;
   }
 
   /**
@@ -218,7 +253,7 @@ export class RaceSession {
       e.lastX = p.x;
       e.lastZ = p.z;
     }
-    this.race.update(dt, this.samples);
+    this.race.update(this.heldValue ? 0 : dt, this.samples);
 
     const manual = this.actions?.reset === true && this.race.phase === 'racing';
     for (let i = 0; i < entries.length; i++) {
@@ -474,3 +509,4 @@ function gatedStorage(inner: BestLapStorage, allowed: () => boolean): BestLapSto
     },
   };
 }
+

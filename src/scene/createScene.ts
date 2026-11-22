@@ -1,7 +1,8 @@
 import { Engine, HavokPlugin, Scene, Vector3 } from '@babylonjs/core';
 import type { AbstractMesh, Mesh } from '@babylonjs/core';
 import HavokPhysics from '@babylonjs/havok';
-import { attachEngineSound } from '../audio/carAudio';
+import { createGameAudio } from '../audio/gameAudio';
+import type { MenuAudioState } from '../audio/gameAudio';
 import { RivalDriver, RivalField, buildField, gridPoses } from '../car/ai';
 import { beginPhysicsFrame, isOutOfWorld, needsRescue } from '../car/createVehicle';
 import { GAME_GRAVITY } from '../car/rig';
@@ -10,14 +11,24 @@ import { BootBakes, bootFlags } from '../boot/gameBoot';
 import { createGameCameraRig } from '../game/camera/CameraRig';
 import type { CameraOccluder } from '../game/camera/CameraRig';
 import { createGameCar } from '../game/car/GameCar';
-import type { CameraRig, GameActionSource } from '../game/contracts/camera';
+import type { CameraRig, GameActions, GameActionSource, ViewMode } from '../game/contracts/camera';
 import type { GameCar } from '../game/contracts/car';
+import type { GameMenu, MenuCommand, MenuDevice, MenuFacts, MenuHost, MenuInputSource, MenuModel, MenuScreenId, MenuState, MenuTrackInfo } from '../game/contracts/menu';
+import { bestLapFor, reloadWith, storeMusicVolume, storeView, storedMusicVolume, storedView, takeMenuNext } from '../game/menuFlow';
+import { createMenuInput } from '../input/MenuInput';
+import { connectedPads } from '../input/pads';
+import { menuCars } from '../ui/menu/menuCars';
+import { createMenuModel } from '../ui/menu/MenuModel';
+import { createMenuView } from '../ui/menu/MenuView';
+import type { MenuViewHandle } from '../ui/menu/MenuView';
+import { createTrackPreviews, trackInfoOf } from '../ui/menu/trackPreview';
+import type { TrackPreviews } from '../ui/menu/trackPreview';
 import type { PropsView, WorldProps } from '../game/contracts/props';
 import type { QualitySettings } from '../game/contracts/quality';
 import type { FrameStats, LabReport, ReportValue } from '../game/contracts/report';
 import type { FlatArena, TerrainSurface } from '../game/contracts/terrain';
 import type { GroundQuery, WorldData } from '../game/contracts/world';
-import { assignLiveries, difficultyPreset } from '../game/options';
+import { assignLiveries, difficultyPreset, menuEnabled } from '../game/options';
 import type { GameOptions } from '../game/options';
 import { DprGovernor, RING_LAYOUT, RING_DIR_TAU, XR_NEAR_DISTANCE, pickQuality, renderRatio, worldScatterDensity } from '../game/quality';
 import { RaceSession } from '../game/RaceSession';
@@ -57,7 +68,7 @@ import type { TuningPanelHandle } from '../ui/TuningPanel';
  * IndexedDB) → hills: generateTerrain → terrain surface → backdrop hills →
  * world props (async: their bakes join the pool, the loading screen shows
  * the progress) / flat: the test arena → the cars one by one on the grid
- * (each takes its finished bake) → camera rig, actions, dust, engine sound,
+ * (each takes its finished bake) → camera rig, actions, dust, engine sound + music,
  * dev UI → the after-physics observer LAST (each vehicle's own observers
  * must run before it) → two warm-up frames → loop.
  *
@@ -66,7 +77,7 @@ import type { TuningPanelHandle } from '../ui/TuningPanel';
  * clears it) → actions → camera cycle → session.beforePhysics (rivals think,
  * every vehicle.update) → scene.render() steps Havok by the SAME dt, then,
  * after the step: car.syncVisual → session.afterPhysics (race, respawns,
- * HUD) → rig.update → props ring → shadow focus → dust, engine sound, perf.
+ * HUD) → rig.update → props ring → shadow focus → dust, engine sound + music, perf.
  *
  * Dev UI (tuning panel T, dev strip H): dev-server builds always; a
  * production build only with `?dev=1` (otherwise T and H do nothing).
@@ -98,11 +109,28 @@ export interface Game {
   /** Boot timings, ms (dataMs, surfaceMs, propsMs, carsMs, totalMs, …). */
   boot: Record<string, number>;
   dust: WheelDust[];
+  /** The game menu (title, setup, pause, post-race), null on pages without
+   * it (`menuEnabled(options)` false: shot, report, autopilot, spot,
+   * countdown=0, flat, menu=0). main.ts calls `menu.boot()` once the
+   * loading panel is gone. */
+  menu: GameMenu | null;
   frameStats(): FrameStats;
   dispose(): void;
 }
 
 const FIXED_DT = 1 / 60;
+/** Title-side camera: eye and look-at this far to the camera's left, m, so
+ * the car stands right of the menu band (SPEC 7; xr ignores it). */
+const TITLE_OFFSET: Record<ViewMode, number> = { chase: 0.8, high: 4, xr: 0 };
+/** Report check 5 (`pausetest=`): frames spent on the pause path. */
+const PAUSE_TEST_FRAMES = 120;
+/** A menu command with nothing pressed (`menushot=` pictures). */
+const IDLE_COMMAND: MenuCommand = {
+  up: false, down: false, left: false, right: false, select: false, back: false, escape: false,
+  pause: false, undo: false, random: false, digit: null, device: 'gamepad', autoPause: false, pointer: [],
+};
+const MENU_SHOT_SCREENS: readonly MenuScreenId[] = ['title', 'car', 'setup', 'settings', 'controls', 'pause', 'confirm'];
+
 const ORIGIN = { x: 0, y: 0, z: 0 };
 /** Respawn bounds of the flat arena: ±99 m, 20 m below the floor. */
 const FLAT_HALF = 99;
@@ -415,6 +443,11 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
   let rigRef: CameraRig | null = null;
   let resetRingDir = (): void => {};
   let tuningRef: TuningPanelHandle | null = null;
+  // The game menu (SPEC 5): only where `menuEnabled` says so, and only with a
+  // race (hills). Its session starts HELD: the 3-2-1 never runs under the
+  // loading panel. Report check 6 (`titlehold=`) holds a menu-less race the
+  // same way.
+  const menuWanted = menuEnabled(options);
 
   if (data) {
     const preset = fieldPreset;
@@ -444,6 +477,7 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
       },
       // A lap driven after a tuning slider moved is not the stock car's.
       canStoreBest: () => !(tuningRef?.touched ?? false),
+      held: menuWanted || options.titleHold > 0,
     });
     let built = 0;
     for (const entry of entries) {
@@ -501,6 +535,20 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
 
   // --- camera, actions, dust, sound, UI
   progress(0.97, 'starting');
+  const menuOn = menuWanted && session !== null;
+  // Live menu values at boot (SPEC 10): the URL wins, else the stored value,
+  // else the option's default. A URL value is stored at once (it is what the
+  // player now sees and hears, as if picked in the menu), so a menu reload,
+  // which drops parameters equal to the defaults, keeps it.
+  let startView: ViewMode = options.view;
+  let startMusic = options.music;
+  if (menuOn) {
+    const url = new URLSearchParams(location.search);
+    if (url.has('view')) storeView(options.view);
+    else startView = storedView() ?? options.view;
+    if (url.has('music')) storeMusicVolume(options.music);
+    else startMusic = storedMusicVolume() ?? options.music;
+  }
   // The high camera eases over the start gantry (its place is in the plan).
   const occluders: CameraOccluder[] = [];
   for (const d of data?.plan.dressing ?? []) {
@@ -514,7 +562,7 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
       top: d.y + GANTRY.top * d.scale,
     });
   }
-  const rig = createGameCameraRig(scene, canvas, { mode: options.view, heightAt: ground.heightAt, occluders });
+  const rig = createGameCameraRig(scene, canvas, { mode: startView, heightAt: ground.heightAt, occluders });
   rigRef = rig;
   rig.setSubject(player.vehicle);
   const rivalDust: WheelDust[] = [];
@@ -533,7 +581,9 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
     for (const d of rivalDust) Object.assign(d.view, rivalSet);
     if (playerDust) Object.assign(playerDust.view, rig.mode === 'high' ? DUST_HIGH : NEUTRAL_DUST_VIEW);
   };
-  const actions: GameActionSource = createGameActions();
+  // With the menu, pad Options is the pause button and Enter restarts only
+  // on a dev page (SPEC 4); without it, today's buttons.
+  const actions: GameActionSource = menuOn ? createGameActions({ enterRestarts: options.dev, padRestarts: false }) : createGameActions();
   const dust: WheelDust[] = [];
   for (const car of cars) {
     if (car === player) {
@@ -548,7 +598,7 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
   }
   applyViewLook();
   look.contacts = cars.slice(0, 4).map((c) => c.contact);
-  const sound = fixedStep ? null : attachEngineSound(player.vehicle);
+  const sound = fixedStep ? null : createGameAudio(player.vehicle, { music: startMusic });
 
   // The tuning panel and dev strip are for development: every dev-server
   // build, and a production build only when the URL asks with `dev=1`.
@@ -582,8 +632,20 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
     return o;
   };
   let hudState = '';
+  // Hidden while a menu covers the race (title, pause; SPEC 3.1 / 3.6). The
+  // HUD is re-created on view and dev-panel changes: `refreshHud` re-applies
+  // this to every new one.
+  let hudHidden = menuOn || options.titleHold > 0;
+  /** The menu view (null without the menu): follows the HUD's scale and
+   * insets so the post-race medal and stack line up with the finish panel. */
+  let menuView: MenuViewHandle | null = null;
+  const syncMenuView = (o: HudOptions): void => {
+    menuView?.setHudScale(o.scale ?? 1);
+    menuView?.setInsets({ top: o.insets?.top ?? 0 });
+  };
   if (session) {
     session.hud = new Hud(hudOptions());
+    if (hudHidden) session.hud.hide();
     hudState = hudKey();
   } else {
     hudOptions(); // places the tuning panel
@@ -593,9 +655,16 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
     if (want === hudState) return;
     hudState = want;
     const o = hudOptions();
+    syncMenuView(o);
     if (!session) return;
     session.hud?.dispose();
     session.hud = new Hud(o);
+    if (hudHidden) session.hud.hide();
+  };
+  const setHudVisible = (on: boolean): void => {
+    hudHidden = !on;
+    if (on) session?.hud?.show();
+    else session?.hud?.hide();
   };
 
   // --- frame
@@ -710,6 +779,94 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
     perf.update(perfReadout);
   };
 
+  // --- the game side of the menu (SPEC 5 / 7). These run on menu pages
+  // through `MenuHost`, and in report mode for checks 5 and 6 (no menu
+  // there: the same functions are called directly).
+  /** The pause menu is open (or report check 5 holds the pause path). */
+  let paused = false;
+  /** One still redraw of the frozen frame is due (camera changed while
+   * paused, resize, the page shown again). */
+  let pausedRedraw = false;
+  let redrawCount = 0;
+  /** Seconds-clock time the player's finish was first seen (post stack). */
+  let finishedAt: number | null = null;
+  const setPausedLook = (on: boolean): void => {
+    paused = on;
+    pausedRedraw = false;
+    // The tint is the view's; the desaturation is the canvas' (high only:
+    // a filter on the canvas costs a composite pass on a Quest).
+    canvas.style.filter = on && quality.name === 'high' ? 'saturate(.72)' : '';
+    sound?.setPaused(on);
+  };
+  /** Back on the player's car, `offset` metres beside it. */
+  const followPlayer = (offset: number): void => {
+    rig.setSubject(player.vehicle);
+    rig.setLateralOffset(offset);
+  };
+  /** RACE / START RACE (nothing staged), RESTART RACE, RACE AGAIN: a fresh
+   * race on the same grid (restart pushes every pose into Havok and resets
+   * the drivers, so race 1 replays the boot race). */
+  const startRaceSide = (): void => {
+    if (!session) return;
+    if (paused) setPausedLook(false);
+    followPlayer(0);
+    session.setHeld(false);
+    session.menuLocked = false;
+    session.restart();
+    finishedAt = null;
+    setHudVisible(true);
+  };
+  const pauseSide = (): void => {
+    if (!session) return;
+    session.menuLocked = true;
+    setHudVisible(false);
+    setPausedLook(true);
+  };
+  const resumeSide = (): void => {
+    if (!session) return;
+    setPausedLook(false);
+    session.menuLocked = false;
+    setHudVisible(true);
+    // In the 3-2-1 a resume restarts the countdown (nobody has moved; the
+    // count-in music cannot be frozen mid-bar).
+    if (session.race.phase === 'countdown') session.restart();
+  };
+  /** QUIT TO TITLE, TITLE, CHANGE CAR, boot: the same world, held on a
+   * fresh grid, the camera beside the player. */
+  const enterTitleSide = (): void => {
+    if (!session) return;
+    if (paused) setPausedLook(false);
+    rig.setSubject(player.vehicle);
+    session.restart();
+    session.setHeld(true);
+    session.menuLocked = true;
+    finishedAt = null;
+    setHudVisible(false);
+    // After the restart's camera snap: the offset eases in with the band.
+    rig.setLateralOffset(TITLE_OFFSET[rig.mode]);
+  };
+  /** Camera view change from the menu (and C on a menu page): what C does,
+   * plus storing it. */
+  const applyView = (): void => {
+    ringDirX = ringDirZ = 0;
+    applyViewLook();
+    devOverlay?.setView(rig.mode);
+    refreshHud();
+  };
+
+  let menuModel: MenuModel | null = null;
+  let menuInput: MenuInputSource | null = null;
+  let tracks: TrackPreviews | null = null;
+  /** `game.menu.boot()` has run (before it the model ignores input and the
+   * page still sits under the loading panel: no driving buttons either). */
+  let menuBooted = false;
+  const menuAudio = (): MenuAudioState => {
+    if (!menuModel) return null;
+    if (!menuBooted) return 'title';
+    const st = menuModel.state;
+    return st === 'title' ? 'title' : st === 'post' ? 'post' : st === 'paused' ? 'paused' : null;
+  };
+
   // After the physics step. Registered LAST: every vehicle's own observers
   // (wheel poses, contact states) have run by the time this reads them.
   scene.onAfterPhysicsObservable.add(() => {
@@ -729,35 +886,82 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
     updatePropsView(dt);
     look.shadows.setFocus(rig.look.followCar ? rig.focus : ORIGIN);
     for (let i = 0; i < dust.length; i++) dust[i].update();
-    sound?.update();
+    sound?.update(session ? session.race : null, session ? session.playerId : player.id, menuAudio());
     samplePerf();
   });
 
+  /** One still frame of the paused race, nothing simulated (SPEC 7): Havok
+   * does not step (so no vehicle or race observer runs), the rig takes a
+   * zero step (a new view or aspect), then the scene is drawn once. */
+  const redrawPaused = (): void => {
+    redrawCount++;
+    const physics = scene.physicsEnabled;
+    scene.physicsEnabled = false;
+    rig.update(0);
+    // Re-pick each car's LOD for the new eye (only syncVisual chooses it).
+    // dt 0: hub poses and spinners stay as they are.
+    for (let i = 0; i < cars.length; i++) cars[i].syncVisual(0, rig.eye);
+    updatePropsView(0);
+    look.shadows.setFocus(rig.look.followCar ? rig.focus : ORIGIN);
+    scene.render();
+    scene.physicsEnabled = physics;
+  };
+
+  /** The menu's part of a frame, set once the menu exists: input → model →
+   * effects → view. Returns the state after this frame's update and the
+   * state before it. */
+  let menuFrame: (() => { before: MenuState; after: MenuState }) | null = null;
+  /** `GameActions` with reset / camera / restart cleared (a menu is open). */
+  const blocked: GameActions = { reset: false, camera: false, restart: false, tuning: false, dev: false, music: false };
+  const withoutDriving = (a: Readonly<GameActions>): Readonly<GameActions> => {
+    blocked.tuning = a.tuning;
+    blocked.dev = a.dev;
+    blocked.music = a.music;
+    return blocked;
+  };
+
   const frame = (dt: number): void => {
     frameDt = dt;
-    // Before the frame is drawn: a new ratio resizes the canvas, which clears
-    // it; after scene.render() that presented one blank frame per change.
-    watchDpr();
     const a = actions.poll();
-    if (a.camera) {
-      rig.cycle();
-      ringDirX = ringDirZ = 0;
-      applyViewLook();
-      devOverlay?.setView(rig.mode);
-      refreshHud();
+    let acts: Readonly<GameActions> = a;
+    if (menuFrame) {
+      const m = menuFrame();
+      // Discard reset / camera / restart while any menu is open, before boot,
+      // and on the frame a menu closes (Circle = BACK must not also reset).
+      if (!menuBooted || m.before !== 'race' || m.after !== 'race') acts = withoutDriving(a);
     }
-    if (a.tuning && tuning) {
+    if (acts.camera) {
+      rig.cycle();
+      applyView();
+      if (menuOn) storeView(rig.mode);
+    }
+    if (acts.tuning && tuning) {
       tuning.toggle();
       refreshHud();
     }
-    if (a.dev && devOverlay) {
+    if (acts.music) sound?.toggleMusic();
+    if (acts.dev && devOverlay) {
       devOverlay.toggle();
       refreshHud();
     }
+    if (paused) {
+      // Nothing simulates or draws: the canvas keeps the last frame. The
+      // music scheduler still needs its mood (otherwise it keeps driving the
+      // last countdown's GO).
+      sound?.update(session ? session.race : null, session ? session.playerId : player.id, 'paused');
+      if (pausedRedraw) {
+        pausedRedraw = false;
+        redrawPaused();
+      }
+      return;
+    }
+    // Before the frame is drawn: a new ratio resizes the canvas, which clears
+    // it; after scene.render() that presented one blank frame per change.
+    watchDpr();
     if (session) {
-      session.beforePhysics(dt, a);
+      session.beforePhysics(dt, acts);
     } else {
-      flatReset = a.reset;
+      flatReset = acts.reset;
       player.vehicle.update(dt);
     }
     dc.fetchNewFrame();
@@ -776,13 +980,142 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
     // chase rule keeps the horizontal fov below 16:9), which a picture taken
     // at another window shape than the boot's otherwise lacks (4:3
     // shots showed the 3D view at the boot window's fov while the HUD
-    // followed the real one).
+    // followed the real one). The paused game is the same case: its frame
+    // loop draws nothing, so it asks for one still redraw.
     if (options.shot && !scene.physicsEnabled) {
       rig.update(0);
       scene.render();
+    } else if (paused) {
+      pausedRedraw = true;
     }
   };
   window.addEventListener('resize', onResize);
+  const onVisibility = (): void => {
+    if (paused && document.visibilityState === 'visible') pausedRedraw = true;
+  };
+  document.addEventListener('visibilitychange', onVisibility);
+
+  // --- the menu (SPEC 8): input, model, view, host. Created after the HUD.
+  let gameMenu: GameMenu | null = null;
+  if (menuOn && session && data) {
+    const s = session;
+    const input = createMenuInput();
+    menuInput = input;
+    tracks = createTrackPreviews(trackInfoOf(options.seed, data.track));
+    const host: MenuHost = {
+      startRace: startRaceSide,
+      pause: pauseSide,
+      resume: resumeSide,
+      restartRace: startRaceSide,
+      enterTitle: () => enterTitleSide(),
+      enterPost: () => {
+        s.menuLocked = true;
+      },
+      setView: (mode) => {
+        rig.setMode(mode);
+        applyView();
+        storeView(mode);
+        const st = menuModel?.state ?? 'title';
+        rig.setLateralOffset(st === 'title' ? TITLE_OFFSET[mode] : 0);
+        if (paused) {
+          rig.snap();
+          pausedRedraw = true;
+        }
+      },
+      setMusicVolume: (v) => {
+        sound?.setMusicVolume(v);
+        storeMusicVolume(v);
+      },
+      previewCar: (carId) => {
+        const target = carId === null || carId === player.carId ? player : (cars.find((c) => c.carId === carId) ?? player);
+        rig.setSubject(target.vehicle);
+        rig.snap();
+      },
+      reload: (overrides) => {
+        reloadWith(options, { ...overrides, view: rig.mode, music: sound?.musicVolume ?? startMusic });
+      },
+    };
+    /** The level the menu's MUSIC row shows: the EFFECTIVE one (0 = OFF
+     * while the M mute is on; raising the row unmutes). A reload keeps the
+     * raw volume (`host.reload`), so a muted page never writes `music=0`. */
+    const menuMusicLevel = (): number => (sound ? (sound.musicOn ? sound.musicVolume : 0) : startMusic);
+    const model = createMenuModel({
+      running: options,
+      host,
+      cars: await menuCars(),
+      tracks,
+      bestLap: bestLapFor,
+      random: Math.random,
+      view: rig.mode,
+      musicVolume: menuMusicLevel(),
+    });
+    menuModel = model;
+    const view = createMenuView({
+      onPointer: (a) => input.push(a),
+      animate: true,
+      hudScale: rig.mode === 'xr' ? XR_HUD_SCALE : 1,
+      insets: { top: devOverlay?.visible ? DEV_OVERLAY_HEIGHT : 0 },
+    });
+    menuView = view;
+    const facts: MenuFacts = {
+      time: 0, phase: 'countdown', lap: 1, laps: options.laps, place: 1, count: 1, finishedFor: null, finishPlace: null,
+      bestLap: null, view: rig.mode, musicVolume: startMusic, audioUnlocked: true, padConnected: false, narrow: false,
+    };
+    const readFacts = (now: number): MenuFacts => {
+      const race = s.race;
+      const snap = race.snapshot(s.playerId);
+      const t = now / 1000;
+      facts.time = t;
+      facts.phase = race.phase;
+      facts.lap = snap.lap;
+      facts.laps = Number.isFinite(snap.laps) ? snap.laps : 0;
+      facts.place = snap.position;
+      facts.count = snap.count;
+      if (snap.finish) {
+        if (finishedAt === null) finishedAt = t;
+        facts.finishedFor = t - finishedAt;
+        facts.finishPlace = snap.finish.position;
+      } else {
+        finishedAt = null;
+        facts.finishedFor = null;
+        facts.finishPlace = null;
+      }
+      facts.bestLap = snap.bestLap;
+      facts.view = rig.mode;
+      facts.musicVolume = menuMusicLevel();
+      facts.audioUnlocked = sound?.unlocked ?? true;
+      facts.padConnected = connectedPads().length > 0;
+      facts.narrow = canvas.clientWidth < canvas.clientHeight * 1.25;
+      return facts;
+    };
+    const afterModel = (): void => {
+      for (const e of model.effects) if (e.kind === 'guard') input.guard();
+      const snap = model.snapshot();
+      input.setRepeat(snap.repeat);
+      input.setCapturing(snap.state !== 'race');
+      view.render(snap);
+    };
+    menuFrame = () => {
+      const now = performance.now();
+      const cmd = input.poll(now);
+      const before = model.state;
+      const after = model.update(cmd, readFacts(now));
+      afterModel();
+      return { before, after };
+    };
+    gameMenu = {
+      boot(): void {
+        if (menuBooted) return;
+        menuBooted = true;
+        model.boot(takeMenuNext());
+        afterModel();
+      },
+      get state(): MenuState {
+        return model.state;
+      },
+      model,
+    };
+  }
 
   const game: Game = {
     engine,
@@ -799,6 +1132,7 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
     rig,
     session,
     backdrop,
+    menu: gameMenu,
     get dpr(): number {
       return dpr;
     },
@@ -809,8 +1143,13 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
       if (disposed) return;
       disposed = true;
       window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
       engine.stopRenderLoop();
       actions.dispose();
+      menuInput?.dispose();
+      menuView?.dispose();
+      tracks?.dispose();
+      canvas.style.filter = '';
       humanInput.dispose();
       sound?.dispose();
       tuning?.dispose();
@@ -862,15 +1201,48 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
   progress(1, 'ready');
 
   if (options.shot) {
+    // `menushot=<screen>` (dev pictures, SPEC 12 screenshots): the REAL
+    // menu over the real world — title-side screens hold the grid with the
+    // title camera, pause / confirm freeze the race at `at` s.
+    const url = new URLSearchParams(location.search);
+    const shotScreen = url.get('menushot') as MenuScreenId | null;
+    const menuShot = session && data && shotScreen !== null && MENU_SHOT_SCREENS.includes(shotScreen) ? shotScreen : null;
+    const titleSide = menuShot !== null && menuShot !== 'pause' && menuShot !== 'confirm' && url.get('menufrom') !== 'paused';
+    if (titleSide) {
+      enterTitleSide();
+      rig.snap();
+    }
     const steps = Math.round(options.at / FIXED_DT);
     for (let i = 0; i < steps; i++) frame(FIXED_DT);
     for (let i = 0; i < 3; i++) frame(FIXED_DT);
+    if (menuShot && session && data) {
+      if (!titleSide) {
+        pauseSide();
+        // The frame stays the last simulated one; the pause styling is DOM.
+        paused = false;
+      }
+      await showMenuShot(menuShot, {
+        options, session, rig, track: trackInfoOf(options.seed, data.track), staged: url.get('menustaged') === '1',
+        device: url.get('menukb') === '1' ? 'keyboard' : 'gamepad', from: url.get('menufrom') === 'paused' ? 'paused' : 'title',
+        hudScale: rig.mode === 'xr' ? XR_HUD_SCALE : 1, musicVolume: startMusic,
+      });
+    }
     scene.physicsEnabled = false;
     setStatus(`shot ready  seed ${options.seed}  view ${rig.mode}  model ${player.vehicle.modelName}  car ${fmtV(player.vehicle.chassisMesh.position)}  lods ${cars.map((c) => c.lod).join('')}  dust ${dust[0]?.activeParticles ?? 0}  dpr ${dpr} draw ${engine.getRenderWidth()}x${engine.getRenderHeight()}`);
     return game; // no render loop: the picture is this frame
   }
   if (options.report) {
-    void runReport(game, frame).catch((e: unknown) => writeFatal(e));
+    const hooks: ReportHooks = {
+      enterTitle: enterTitleSide,
+      startRace: startRaceSide,
+      pause: () => {
+        pauseSide();
+        pausedRedraw = true; // exercise the still redraw once
+      },
+      resume: resumeSide,
+      redraws: () => redrawCount,
+    };
+    void runReport(game, frame, hooks).catch((e: unknown) => writeFatal(e));
     return game;
   }
   engine.runRenderLoop(() => frame(beginPhysicsFrame(scene)));
@@ -878,7 +1250,77 @@ async function bootGame(canvas: HTMLCanvasElement, options: GameOptions, onProgr
 }
 
 // ---------------------------------------------------------------------------
+// `menushot=` pictures: the real menu model + view over a shot frame.
+
+interface MenuShotContext {
+  options: GameOptions;
+  session: RaceSession;
+  rig: CameraRig;
+  track: MenuTrackInfo;
+  staged: boolean;
+  device: MenuDevice;
+  from: 'title' | 'paused';
+  hudScale: number;
+  musicVolume: number;
+}
+
+async function showMenuShot(screen: MenuScreenId, c: MenuShotContext): Promise<void> {
+  const noop = (): void => {};
+  const host: MenuHost = {
+    startRace: noop, pause: noop, resume: noop, restartRace: noop, enterTitle: noop, enterPost: noop,
+    setView: noop, setMusicVolume: noop, previewCar: noop, reload: noop,
+  };
+  // Synchronous previews: a shot page has one frame to show them.
+  const known = new Map<number, MenuTrackInfo>([[c.track.seed, c.track]]);
+  const tracks = {
+    get: (seed: number): MenuTrackInfo => {
+      let t = known.get(seed);
+      if (!t) {
+        t = trackInfoOf(seed, generateTerrain(seed).track);
+        known.set(seed, t);
+      }
+      return t;
+    },
+  };
+  const model = createMenuModel({
+    running: c.options,
+    host,
+    cars: await menuCars(),
+    tracks,
+    bestLap: bestLapFor,
+    random: () => 0.5,
+    view: c.rig.mode,
+    musicVolume: c.musicVolume,
+    staged: c.staged ? { seed: c.options.seed === 27 ? 28 : 27, laps: 5 } : undefined,
+  });
+  model.pin({ screen, from: c.from });
+  const race = c.session.race;
+  const snap = race.snapshot(c.session.playerId);
+  model.update(
+    { ...IDLE_COMMAND, device: c.device },
+    {
+      time: 0, phase: race.phase, lap: snap.lap, laps: Number.isFinite(snap.laps) ? snap.laps : 0, place: snap.position, count: snap.count,
+      finishedFor: null, finishPlace: null, bestLap: snap.bestLap, view: c.rig.mode, musicVolume: c.musicVolume,
+      audioUnlocked: true, padConnected: c.device === 'gamepad', narrow: innerWidth < innerHeight * 1.25,
+    },
+  );
+  const view = createMenuView({ onPointer: noop, animate: false, hudScale: c.hudScale });
+  view.render(model.snapshot());
+}
+
+// ---------------------------------------------------------------------------
 // Report mode (contracts/report.ts)
+
+/** The game side of the menu, for report checks 5 (`pausetest=`) and 6
+ * (`titlehold=`): the functions `MenuHost` calls on a menu page. */
+interface ReportHooks {
+  enterTitle(): void;
+  startRace(): void;
+  pause(): void;
+  resume(): void;
+  /** Still redraws of the paused frame so far. */
+  redraws(): number;
+}
 
 function setStatus(text: string): void {
   const el = document.getElementById('status');
@@ -930,7 +1372,7 @@ export function writeFatal(e: unknown): void {
   );
 }
 
-async function runReport(game: Game, frame: (dt: number) => void): Promise<void> {
+async function runReport(game: Game, frame: (dt: number) => void, hooks: ReportHooks): Promise<void> {
   const { engine, session, cars, props, options } = game;
   const race = session?.race ?? null;
   const samples = {
@@ -947,13 +1389,78 @@ async function runReport(game: Game, frame: (dt: number) => void): Promise<void>
     for (const c of cars) if (!race.snapshot(c.id).finish) return false;
     return true;
   };
-  setStatus('racing');
+  // Check 6: the title screen's hold (boot('title') → held frames → RACE).
+  const titleHold = session && options.titleHold > 0 ? options.titleHold : 0;
+  let holdLeft = titleHold;
+  let holdCountMin = Infinity;
+  let holdCountMax = -Infinity;
+  let holdRespawns = 0;
+  let holdInputOpen = 0;
+  if (holdLeft > 0) hooks.enterTitle();
+  // Check 5: the pause path for PAUSE_TEST_FRAMES frames at `pausetest` s.
+  let pauseLeft = options.pauseTest !== null && session ? -1 : -2; // -1 pending, > 0 running, 0 done, -2 off
+  let pauseFrozen = true;
+  let pauseRedraws = 0;
+  let frozenAt: number[] = [];
+  const poseNow = (): number[] => {
+    const out: number[] = [];
+    for (const c of cars) {
+      const p = c.vehicle.chassisMesh.position;
+      const q = c.vehicle.chassisMesh.rotationQuaternion;
+      out.push(p.x, p.y, p.z, q?.x ?? 0, q?.y ?? 0, q?.z ?? 0, q?.w ?? 1);
+    }
+    if (race) out.push(race.snapshot(session!.playerId).raceTime, race.snapshot(session!.playerId).lapTime);
+    return out;
+  };
+  const PROBE_FRAMES = [1, 2, 3, 10, 60, 170, 180, 181, 185, 200, 240, 300];
+  const stats0: Record<string, ReportValue> = {};
+  setStatus(titleHold > 0 ? 'title hold' : 'racing');
   const tWall = performance.now();
   await new Promise<void>((resolve) => {
     engine.runRenderLoop(() => {
+      if (holdLeft > 0 && session && race) {
+        frame(FIXED_DT);
+        holdLeft--;
+        holdCountMin = Math.min(holdCountMin, race.countdownRemaining);
+        holdCountMax = Math.max(holdCountMax, race.countdownRemaining);
+        if (!race.inputLocked) holdInputOpen++;
+        if (holdLeft === 0) {
+          for (const c of cars) holdRespawns += session.respawnCounts[c.id] ?? 0;
+          hooks.startRace();
+          setStatus('racing');
+        }
+        return;
+      }
+      if (pauseLeft === -1 && sim >= (options.pauseTest ?? Infinity)) {
+        frozenAt = poseNow();
+        const r0 = hooks.redraws();
+        hooks.pause();
+        pauseLeft = PAUSE_TEST_FRAMES;
+        pauseRedraws = -r0;
+      }
+      if (pauseLeft > 0) {
+        frame(FIXED_DT);
+        pauseLeft--;
+        if (pauseLeft === 0) {
+          const now = poseNow();
+          pauseFrozen = now.length === frozenAt.length && now.every((v, i) => Object.is(v, frozenAt[i]));
+          pauseRedraws += hooks.redraws();
+          hooks.resume();
+        }
+        return;
+      }
       frame(FIXED_DT);
       sim += FIXED_DT;
       frames++;
+      // Checks 5 / 6: every car's pose, velocity and speed at a few race
+      // frames (where two runs part, if they do).
+      if ((titleHold > 0 || options.pauseTest !== null) && PROBE_FRAMES.includes(frames)) {
+        for (const c of cars) {
+          const p = c.vehicle.chassisMesh.position;
+          const v = c.vehicle.chassisBody.getLinearVelocity();
+          stats0[`probe.f${frames}.${c.id}`] = `${p.x} ${p.y} ${p.z} | ${v.x} ${v.y} ${v.z} | ${c.vehicle.forwardSpeed}`;
+        }
+      }
       if (sim >= nextSample) {
         nextSample += 0.5;
         const f = game.frameStats();
@@ -1040,6 +1547,8 @@ async function runReport(game: Game, frame: (dt: number) => void): Promise<void>
       const causes = Object.entries(session.respawnCauses[id] ?? {}).map(([k, n]) => `${k}:${n}`).join(' ');
       stats[`race.${id}.respawnCauses`] = causes;
       stats[`race.${id}.moved30`] = round(moved30[id] ?? 0);
+      stats[`race.${id}.odometer`] = round(session.odometer(id), 1000);
+      stats[`race.${id}.lapTimes`] = snap.finish ? snap.finish.lapTimes.map((t) => t.toFixed(3)).join(' ') : '';
       const inLap = session.maxRespawnsPerLap[id] ?? 0;
       stats[`race.${id}.maxRespawnsInOneLap`] = inLap;
       if (inLap > 2) storm += `${id}:${inLap} in one lap `;
@@ -1052,6 +1561,19 @@ async function runReport(game: Game, frame: (dt: number) => void): Promise<void>
     if (Number.isFinite(race.config.laps)) {
       check('race.allFinished', `${finished} / ${cars.length}`, `every car finished ${race.config.laps} lap(s) within ${options.seconds} s`, finished === cars.length);
     }
+  }
+  stats['menu.overlay'] = document.querySelector('.rmenu') !== null;
+  Object.assign(stats, stats0);
+  if (titleHold > 0) {
+    stats['titleHold.frames'] = titleHold;
+    check('titleHold.countdown', `${holdCountMin} … ${holdCountMax}`, 'race.countdownRemaining stayed 3 through the hold', holdCountMin === 3 && holdCountMax === 3);
+    check('titleHold.locked', holdInputOpen, 'input locked on every held frame', holdInputOpen === 0);
+    check('titleHold.respawns', holdRespawns, 'no car respawned during the hold', holdRespawns === 0);
+  }
+  if (options.pauseTest !== null && session) {
+    check('pause.ran', pauseLeft === 0 ? PAUSE_TEST_FRAMES : 0, `${PAUSE_TEST_FRAMES} frames on the pause path at ${options.pauseTest} s`, pauseLeft === 0);
+    check('pause.frozen', pauseFrozen ? 'ok' : 'moved', 'every car pose and the race clock bit-identical across the pause', pauseFrozen);
+    check('pause.redraw', pauseRedraws, 'one still redraw of the paused frame', pauseRedraws === 1);
   }
   // Booted = createGame returned with a player car, the loop ran frames,
   // and the player's car is still a finite position (not NaN from a broken

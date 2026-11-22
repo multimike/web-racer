@@ -1,4 +1,4 @@
-import { SolidMesh, paint } from '../../gfx/solid';
+import { SolidMesh, paint, toRGB } from '../../gfx/solid';
 import { BUILDING, COMET_FOX, FOLIAGE } from '../palette';
 import type { CarAsset, CarGeometry } from '../types';
 import { addDashboard, addPedals, addSeat, addSteeringColumn, buildDriver, buildRunningGear, buildSteeringWheel, columnAxis, suspensionAnchors } from './parts';
@@ -141,6 +141,8 @@ const cometFox: CarAsset = {
   category: 'car',
   spec: SPEC,
   liveries: LIVERIES.length,
+  // Swatch: shell / tube frame (vermilion on teal on the sheet).
+  paints: LIVERIES.map((l) => ({ name: l.name, body: toRGB(l.body), accent: toRGB(l.cage) })),
   build,
   triBudget: 60000,
   reference: {

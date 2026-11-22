@@ -33,6 +33,19 @@ Run everything from the repo root:
 - `pngdiff.mjs a.png b.png [diff.png]` — pixel comparison of two
   screenshots (largest per-channel difference, bounding box, optional diff
   image). Plain `node`. Exit 0 when the largest difference is ≤ 2 of 255.
+- `menu-model-test.ts` — the game menu's acceptance check 3
+  (design-documents/menu-mockups/SPEC.md 12): pad-only and key-only scripts
+  through the real `MenuInput` (fake window and pads) and `MenuModel` (mock
+  host) reach and leave every screen, keep focus valid, stage only
+  differing keys, rebuild the reload query, never draw a bad RANDOM seed,
+  stop LAPS at ENDLESS / 99, honour the release guard; plus digit entry,
+  pointer actions, `pin()`, display texts and `menuFlow` storage. Exit 1 on
+  any failure.
+- `report-diff.mjs a.json b.json [--keys=race.,…]` — compares the race of
+  two game reports (per-car laps, times, positions, odometers, lap times,
+  respawns; default prefix `race.`). The menu's checks 5 and 6: a
+  `pausetest=<s>` or `titlehold=<frames>` run against a plain run. Plain
+  `node`; exit 1 on any difference.
 - `static-serve.mjs <dir>` — minimal static server for a production build;
   started and stopped by `tools/distboot.sh` only.
 

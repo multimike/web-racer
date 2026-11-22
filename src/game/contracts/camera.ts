@@ -80,6 +80,12 @@ export interface CameraRig {
   /** Jump straight to the settled pose behind the subject (after a respawn
    * or a restart) instead of swinging there. */
   snap(): void;
+  /** Shift eye AND look-at point `m` metres to the camera's left (so the
+   * subject stands right of the menu band), eased with a 0.35 s time
+   * constant (`snap()` settles it at once). Applies in 'chase' and 'high',
+   * ignored in 'xr'; kept across `setMode` / `setSubject`. Title-side menus
+   * use 2.2 m (chase) / 4 m (high), the race 0 (default). */
+  setLateralOffset(m: number): void;
   /** Call after the physics step, before rendering. */
   update(dt: number): void;
   dispose(): void;
@@ -95,12 +101,16 @@ export interface GameActions {
   reset: boolean;
   /** Next camera. Keyboard C, gamepad button 3 (Triangle / Y). */
   camera: boolean;
-  /** Restart the race. Keyboard Enter, gamepad button 9 (Options / Start). */
+  /** Restart the race. Keyboard Enter, gamepad button 9 (Options / Start)
+   * on a page WITHOUT the game menu; with the menu, pad 9 is the pause
+   * button (never a restart) and Enter restarts only with `?dev=1`. */
   restart: boolean;
   /** Show / hide the tuning panel. Keyboard T. */
   tuning: boolean;
   /** Show / hide the dev overlay (A/B links, perf counters). Keyboard H. */
   dev: boolean;
+  /** Music on / off. Keyboard M. */
+  music: boolean;
 }
 
 export interface GameActionSource {
@@ -109,5 +119,7 @@ export interface GameActionSource {
   dispose(): void;
 }
 
-/** `createGameActions` (src/input/GameActions.ts). */
-export type CreateGameActions = () => GameActionSource;
+/** `createGameActions` (src/input/GameActions.ts). No options = the page
+ * without the menu (Enter and pad 9 restart); a menu page passes
+ * `{ enterRestarts: options.dev, padRestarts: false }`. */
+export type CreateGameActions = (opts?: { enterRestarts?: boolean; padRestarts?: boolean }) => GameActionSource;

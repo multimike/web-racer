@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>Music Lab</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1d2026;
+    --line: #2c313a;
+    --text: #d7dce4;
+    --dim: #8a93a2;
+    --accent: #4fa8ff;
+    --hot: #ff7a45;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    background: var(--bg); color: var(--text);
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 0 0 10px; color: var(--dim); font-weight: 600; }
+  .sub { color: var(--dim); margin: 0 0 20px; max-width: 70ch; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px; margin-bottom: 16px; max-width: 900px;
+  }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .row + .row { margin-top: 12px; }
+  label { color: var(--dim); }
+  input[type=range] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+  button {
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px;
+    font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.on { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .parts label { display: inline-flex; gap: 4px; align-items: center; min-width: 76px; }
+  #pos { color: var(--accent); }
+  #status { color: var(--dim); white-space: pre-wrap; }
+  pre#result { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Music Lab</h1>
+<p class="sub">The race theme ("Table Top Rally", <code>src/audio/music/</code>) as the game plays it. Start audio, then switch moods the way the race would. <code>?report=1</code> renders a scripted race offline and checks timing and levels (<code>&amp;wav=music|mix</code> adds a WAV).</p>
+
+<div class="panel">
+  <div class="row">
+    <button id="start">Start audio</button>
+    <span id="pos">stopped</span>
+  </div>
+  <div class="row" id="moods">
+    <button data-mood="idle">Idle</button>
+    <button data-mood="countdown">Countdown (GO in 3 s)</button>
+    <button data-mood="race">Race</button>
+    <button data-mood="final">Final lap</button>
+    <button data-mood="finishWin">Finish: 1st</button>
+    <button data-mood="finish">Finish: other</button>
+  </div>
+  <div class="row">
+    <label for="vol">Music volume</label>
+    <input id="vol" type="range" min="0" max="1" step="0.01" value="1" />
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Engine (to judge the balance)</h2>
+  <div class="row">
+    <button id="engine">Engine off</button>
+    <label for="rpm">rpm</label>
+    <input id="rpm" type="range" min="0.08" max="1" step="0.01" value="0.6" />
+    <label for="thr">throttle</label>
+    <input id="thr" type="range" min="0" max="1" step="0.01" value="1" />
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Parts</h2>
+  <div class="row parts" id="parts"></div>
+</div>
+
+<div class="panel">
+  <h2>Offline render (scripted race: idle, countdown, 72 s race, final lap, win)</h2>
+  <div class="row">
+    <button id="wavMusic">Download WAV: music</button>
+    <button id="wavMix">Download WAV: music + engine</button>
+  </div>
+</div>
+
+<div id="status"></div>
+<pre id="result" hidden></pre>
+<script type="module" src="/src/lab/musicLab.ts"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>clean frame</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}iframe{position:fixed;inset:0;width:100%;height:100%;border:0}</style>
+<iframe id="f"></iframe>
+<script>
+// Helper for the arcade mockup: the game's shot frame WITHOUT its HUD (the menu hides the HUD on the title).
+const q=new URLSearchParams(location.search);const f=document.getElementById('f');
+f.src='/index.html?shot=1&at='+(q.get('at')||'1')+'&view='+(q.get('view')||'chase')+(q.get('extra')?'&'+q.get('extra'):'');
+const t=setInterval(()=>{try{const d=f.contentDocument;if(d&&d.head&&!d.getElementById('nohud')){const s=d.createElement('style');s.id='nohud';s.textContent='.rhud{display:none!important}';d.head.appendChild(s);}}catch(e){}},5);
+</script>

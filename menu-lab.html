@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Menu Lab — web-racer</title>
+<link rel="icon" href="data:," />
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #0b141c; }
+  /* The emulated stage (stage=WxH) or the whole window. */
+  #stage { position: fixed; inset: 0; overflow: hidden; background: #3f6f5a; }
+  #stage.sized { position: absolute; left: 0; top: 0; right: auto; bottom: auto; }
+  /* Backdrop: a real game frame without HUD; .shift = the title camera's
+     sideways offset as final.html fakes it. */
+  .bg { position: absolute; inset: 0; background: center / cover no-repeat; }
+  .bg.shift { left: 0; top: 0; right: -15%; bottom: -15%; background-position: 0 0; }
+  .bg.color { background: linear-gradient(#7fb6e0 0%, #a8d4ee 40%, #8bbf5a 41%, #6d9e45 100%); }
+
+  #panel { position: fixed; right: 10px; bottom: 10px; z-index: 30; max-width: 360px;
+    font: 11.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #e8f0f4;
+    background: rgba(16, 24, 32, 0.86); border-radius: 6px; padding: 8px 10px; }
+  #panel nav { display: flex; flex-wrap: wrap; gap: 3px 8px; }
+  #panel a { color: #7fe3f0; text-decoration: none; }
+  #panel a:hover { text-decoration: underline; }
+  #panel pre { margin: 6px 0 0; white-space: pre-wrap; max-height: 160px; overflow: auto; }
+  body.bare #panel { display: none; }
+  #status { position: fixed; left: 8px; top: 8px; z-index: 31; font: 12px monospace; color: #fff; }
+  #status:empty { display: none; }
+  #result { display: none; }
+  #fatal { position: fixed; inset: 0; z-index: 40; margin: 0; padding: 24px; white-space: pre-wrap;
+    font: 13px/1.4 ui-monospace, Menlo, monospace; color: #fff; background: rgba(150, 30, 24, 0.94); }
+  #fatal:empty { display: none; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="panel"><nav id="links"></nav><pre id="log"></pre></div>
+<div id="status"></div>
+<pre id="result"></pre>
+<pre id="fatal"></pre>
+<script type="module" src="/src/lab/menuLab.ts"></script>
+</body>
+</html>

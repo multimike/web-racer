@@ -42,18 +42,21 @@ const started = optionsError
 
 started
   .then((game) => {
-    // Gone once the first frame of the running game is on screen. On the
-    // live page the 3-2-1 has been running under the fading panel: start it
-    // again once the panel is gone, so the countdown's "3" is seen in full
-    // (a restart: every car is still on its grid spot, input is locked).
-    // Report and shot pages keep their timing; a ?spot= page too (restart
-    // would put the player back on the grid).
+    // Gone once the first frame of the running game is on screen. With the
+    // game menu the race has been HELD under the panel: `menu.boot()` opens
+    // the title (or, after a menu reload, starts the 3-2-1). Without it the
+    // 3-2-1 has been running under the fading panel: start it again once the
+    // panel is gone, so the countdown's "3" is seen in full (a restart: every
+    // car is still on its grid spot, input is locked). Report and shot pages
+    // keep their timing; a ?spot= page too (restart would put the player
+    // back on the grid).
     const live = !options.report && !options.shot;
     const restartCountdown = (): void => {
       const s = game.session;
       if (live && options.countdown && options.spot === null && s && s.race.phase === 'countdown') s.restart();
     };
-    if (loading) requestAnimationFrame(() => requestAnimationFrame(() => loading.remove(restartCountdown)));
+    const afterPanel = (): void => (game.menu ? game.menu.boot() : restartCountdown());
+    if (loading) requestAnimationFrame(() => requestAnimationFrame(() => loading.remove(afterPanel)));
     if (import.meta.env.DEV) (window as unknown as { __game: typeof game }).__game = game;
   })
   .catch((e: unknown) => {

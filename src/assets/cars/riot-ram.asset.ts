@@ -176,6 +176,10 @@ const riotRam: CarAsset = {
   category: 'car',
   spec: SPEC,
   liveries: LIVERIES.length,
+  // Swatch: body (hood, frames AND cage) / panels — cobalt on orange on the
+  // sheet; the cage wears the body colour, so the panels are the second one.
+  // 'Riot (design sheet)' is shown as 'Riot'.
+  paints: LIVERIES.map((l) => ({ name: l.name.replace(/\s*\(.*\)\s*$/, ''), body: l.body, accent: l.panel })),
   build,
   triBudget: 60000,
   reference: {

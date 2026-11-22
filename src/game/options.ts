@@ -56,6 +56,21 @@ export interface GameOptions {
   /** Far hills behind the terrain rim (`?backdrop=0` turns them
    * off, to measure what they cost). */
   backdrop: boolean;
+  /** Music volume 0 … 1 (`?music=`, default 0.7 ≈ −3 dB, 0 = no music; M
+   * toggles it in game). */
+  music: number;
+  /** The game menu (title, setup, pause, post-race; `?menu=0` turns it off
+   * and restores the instant race of the old page). Only honoured where
+   * `menuEnabled` says so. */
+  menu: boolean;
+  /** Report mode, the menu's pause check (SPEC 12, check 5): at this many
+   * simulated seconds the frame loop takes the pause path for 120 frames,
+   * then resumes (`?pausetest=<s>`); null = no pause. */
+  pauseTest: number | null;
+  /** Report mode, the menu's title-hold check (SPEC 12, check 6): the race
+   * is held like the title screen for this many frames, then started the
+   * way RACE starts it (`?titlehold=<frames>`); 0 = off. */
+  titleHold: number;
 }
 
 export const VEHICLE_MODELS: readonly string[] = ['raycast', 'assist', 'hybrid', 'rigid'];
@@ -117,7 +132,22 @@ export function defaultGameOptions(userAgent = ''): GameOptions {
     liveBoot: false,
     dpr: null,
     backdrop: true,
+    music: 0.7,
+    menu: true,
+    pauseTest: null,
+    titleHold: 0,
   };
+}
+
+/**
+ * Does this page get the game menu (design-documents/menu-mockups/SPEC.md,
+ * section 5)? Never on tool pages (shot, report, autopilot, `?spot=`), with
+ * `?countdown=0` (the race starts at once, a held title cannot exist), on the
+ * flat arena (no race) or with `?menu=0`: those pages behave exactly as
+ * before the menu existed.
+ */
+export function menuEnabled(o: GameOptions): boolean {
+  return o.menu && !o.shot && !o.report && !o.autopilot && o.spot === null && o.countdown && o.terrain === 'hills';
 }
 
 function int(raw: string | null, lo: number, hi: number, fallback: number): number {
@@ -182,6 +212,7 @@ export function parseGameOptions(search: string, userAgent = typeof navigator !=
   let spot: GameOptions['spot'] = null;
   if (spotRaw === 'village') spot = 'village';
   else if (spotRaw !== null && spotRaw.trim() !== '' && Number.isFinite(Number(spotRaw))) spot = Number(spotRaw);
+  const report = flag(p.get('report'), d.report);
   return {
     seed: int(p.get('seed'), 1, 2 ** 31 - 1, d.seed),
     terrain: oneOf(p.get('terrain'), ['hills', 'flat'] as const, d.terrain),
@@ -206,11 +237,17 @@ export function parseGameOptions(search: string, userAgent = typeof navigator !=
     shot: flag(p.get('shot'), d.shot),
     at: real(p.get('at'), 0, 600, d.at),
     spot,
-    report: flag(p.get('report'), d.report),
+    report,
     seconds: real(p.get('seconds'), 1, 3600, d.seconds),
     liveBoot: flag(p.get('liveboot'), d.liveBoot),
     dpr: p.get('dpr') === null ? d.dpr : real(p.get('dpr'), 0.25, 4, NaN) || d.dpr,
     backdrop: flag(p.get('backdrop'), d.backdrop),
+    music: real(p.get('music'), 0, 1, d.music),
+    menu: flag(p.get('menu'), d.menu),
+    // Report mode only: elsewhere a stray `titlehold` would hold the race
+    // forever (only the report runner releases it).
+    pauseTest: !report || real(p.get('pausetest'), 0, 3600, -1) < 0 ? d.pauseTest : real(p.get('pausetest'), 0, 3600, -1),
+    titleHold: report ? int(p.get('titlehold'), 0, 100000, d.titleHold) : d.titleHold,
   };
 }
 
@@ -245,6 +282,8 @@ export function optionsToQuery(options: GameOptions, overrides: Partial<GameOpti
   if (o.spot !== null) p.set('spot', String(o.spot));
   if (o.dpr !== null) p.set('dpr', String(o.dpr));
   if (!o.backdrop) p.set('backdrop', '0');
+  if (o.music !== d.music) p.set('music', String(o.music));
+  if (!o.menu) p.set('menu', '0');
   if (o.shot) {
     p.set('shot', '1');
     p.set('at', String(o.at));
@@ -253,6 +292,8 @@ export function optionsToQuery(options: GameOptions, overrides: Partial<GameOpti
     p.set('report', '1');
     p.set('seconds', String(o.seconds));
     if (o.liveBoot) p.set('liveboot', '1');
+    if (o.pauseTest !== null) p.set('pausetest', String(o.pauseTest));
+    if (o.titleHold > 0) p.set('titlehold', String(o.titleHold));
   }
   const s = p.toString();
   return s ? `?${s}` : '?';

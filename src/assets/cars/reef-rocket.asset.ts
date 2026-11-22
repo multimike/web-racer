@@ -112,6 +112,8 @@ const TREAD: TreadPattern = {
 // Liveries: colours only, never shape.
 
 interface Livery {
+  /** Shown in the game menu's paint picker. */
+  name: string;
   body: RGB;
   cage: RGB;
   trim: RGB;
@@ -125,13 +127,13 @@ const LAVENDER = hex('#9C8FE0');
 
 const LIVERIES: Livery[] = [
   // 0 — the sheet.
-  { body: REEF_ROCKET.bodyTurquoise, cage: REEF_ROCKET.cageCoral, trim: REEF_ROCKET.trimCream, accent: REEF_ROCKET.cageCoral, glow: REEF_ROCKET.emissionCyan, seat: REEF_ROCKET.cageCoral },
+  { name: 'Reef', body: REEF_ROCKET.bodyTurquoise, cage: REEF_ROCKET.cageCoral, trim: REEF_ROCKET.trimCream, accent: REEF_ROCKET.cageCoral, glow: REEF_ROCKET.emissionCyan, seat: REEF_ROCKET.cageCoral },
   // 1 — "Sunset": coral shell, cobalt cage, turquoise wave.
-  { body: REEF_ROCKET.cageCoral, cage: BUILDING.cobalt, trim: REEF_ROCKET.trimCream, accent: REEF_ROCKET.bodyTurquoise, glow: REEF_ROCKET.emissionCyan, seat: BUILDING.cobalt },
+  { name: 'Sunset', body: REEF_ROCKET.cageCoral, cage: BUILDING.cobalt, trim: REEF_ROCKET.trimCream, accent: REEF_ROCKET.bodyTurquoise, glow: REEF_ROCKET.emissionCyan, seat: BUILDING.cobalt },
   // 2 — "Kelp": jade shell, ochre cage, lime wave.
-  { body: FOLIAGE.jade, cage: BUILDING.mustard, trim: REEF_ROCKET.trimCream, accent: FOLIAGE.lime, glow: FOLIAGE.highlight, seat: BUILDING.mustard },
+  { name: 'Kelp', body: FOLIAGE.jade, cage: BUILDING.mustard, trim: REEF_ROCKET.trimCream, accent: FOLIAGE.lime, glow: FOLIAGE.highlight, seat: BUILDING.mustard },
   // 3 — "Dusk": lavender shell, cobalt cage, ochre wave.
-  { body: LAVENDER, cage: BUILDING.cobalt, trim: REEF_ROCKET.trimCream, accent: BUILDING.mustard, glow: REEF_ROCKET.emissionCyan, seat: BUILDING.coral },
+  { name: 'Dusk', body: LAVENDER, cage: BUILDING.cobalt, trim: REEF_ROCKET.trimCream, accent: BUILDING.mustard, glow: REEF_ROCKET.emissionCyan, seat: BUILDING.coral },
 ];
 
 // ---------------------------------------------------------------------------
@@ -303,6 +305,8 @@ const reefRocket: CarAsset = {
   category: 'car',
   spec: SPEC,
   liveries: LIVERIES.length,
+  // Swatch: turquoise shell / coral cage on the sheet.
+  paints: LIVERIES.map((l) => ({ name: l.name, body: l.body, accent: l.cage })),
   build,
   triBudget: 60000,
   reference: {

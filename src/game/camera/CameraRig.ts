@@ -67,6 +67,12 @@ export interface GameCameraRigOptions extends CameraRigOptions {
  *  - the speed terms (`speedDistance`, `speedFov`) follow a smoothed speed
  *    (SPEED_TAU), so a crash does not jump the camera in one frame.
  *
+ * MENU OFFSET (`setLateralOffset`): in chase and high the eye AND the look-at
+ * point slide `m` metres to the camera's left, so the car stands right of the
+ * menu band; the shift eases with LATERAL_TAU (0.35 s), `snap()` settles it,
+ * it survives `setMode` / `setSubject` and xr ignores it. The shadow / detail
+ * `focus` stays on the car. 0 (the race) is the plain rig, bit for bit.
+ *
  * No allocations in `update`.
  */
 
@@ -202,6 +208,8 @@ const LIFT_TAU = 0.12;
  * height of the car point the framing keeps in place, m. */
 const LIFT_TAIL = 2;
 const LIFT_CAR_Y = 1;
+/** Time constant of the menu's lateral offset, s (contracts/camera.ts). */
+const LATERAL_TAU = 0.35;
 
 /**
  * The vertical fov the chase / high rig really uses for a tuning `fov` in a
@@ -259,6 +267,7 @@ class FollowMode implements ModeController {
   private readonly settings: () => FollowSettings;
   private readonly subject: () => Vehicle | null;
   private readonly heightAt: ((x: number, z: number) => number) | undefined;
+  private readonly lateral: () => number;
   private yaw = 0;
   private baseY = 0;
   private speedK = 0;
@@ -280,6 +289,7 @@ class FollowMode implements ModeController {
     settings: () => FollowSettings,
     subject: () => Vehicle | null,
     heightAt: ((x: number, z: number) => number) | undefined,
+    lateral: () => number,
   ) {
     this.camera = new UniversalCamera(name, new Vector3(0, 3, -5.6), scene);
     this.camera.minZ = 0.3;
@@ -290,6 +300,7 @@ class FollowMode implements ModeController {
     this.settings = settings;
     this.subject = subject;
     this.heightAt = heightAt;
+    this.lateral = lateral;
   }
 
   enter(): void {
@@ -383,13 +394,18 @@ class FollowMode implements ModeController {
     } else {
       this.lift = 0;
     }
-    const ex = cx - sy * dist;
-    const ez = cz - cy * dist;
+    // Menu offset: eye and look-at slide to the camera's left, (−cos, +sin)
+    // of the yaw (right of a heading (sin, cos) is (cos, −sin)).
+    const side = this.lateral();
+    const ox = -cy * side;
+    const oz = sy * side;
+    const ex = cx - sy * dist + ox;
+    const ez = cz - cy * dist + oz;
     let ey = this.baseY + height;
     if (this.heightAt) ey = Math.max(ey, this.heightAt(ex, ez) + s.minClearance);
-    const tx = cx + sy * s.lookAhead;
+    const tx = cx + sy * s.lookAhead + ox;
     const ty = this.baseY + s.lookUp;
-    const tz = cz + cy * s.lookAhead;
+    const tz = cz + cy * s.lookAhead + oz;
     // `fov` is vertical at 16:9 and wider; a narrower window keeps the 16:9
     // horizontal fov (see the header).
     const fov = s.fov(k);
@@ -588,11 +604,15 @@ class Rig implements CameraRig {
   private marked: Vehicle | null = null;
   private readonly scene: Scene;
   private readonly modes: Record<ViewMode, ModeController>;
+  /** Menu offset: wanted and eased value, m (see the header). */
+  private lateralTarget = 0;
+  private lateralNow = 0;
 
   constructor(scene: Scene, canvas: HTMLCanvasElement, options: GameCameraRigOptions = {}) {
     this.scene = scene;
     const subject = (): Vehicle | null => this.subject;
     const heightAt = options.heightAt;
+    const lateral = (): number => this.lateralNow;
     // Settings are read from CAMERA_TUNING on every update, so console edits
     // take effect at once.
     const chase: FollowSettings = {
@@ -638,10 +658,10 @@ class Rig implements CameraRig {
       high.minClearance = CAMERA_TUNING.chase.minClearance;
       return high;
     };
-    const highMode = new FollowMode('highCam', scene, highSettings, subject, heightAt);
+    const highMode = new FollowMode('highCam', scene, highSettings, subject, heightAt, lateral);
     highMode.occluders = options.occluders ?? [];
     this.modes = {
-      chase: new FollowMode('chaseCam', scene, chaseSettings, subject, heightAt),
+      chase: new FollowMode('chaseCam', scene, chaseSettings, subject, heightAt, lateral),
       high: highMode,
       xr: new OrbitMode(scene, canvas, heightAt),
     };
@@ -699,10 +719,20 @@ class Rig implements CameraRig {
   }
 
   snap(): void {
+    this.lateralNow = this.lateralTarget;
     this.modes[this.current].snap(this.eye, this.focus);
   }
 
+  setLateralOffset(m: number): void {
+    this.lateralTarget = Number.isFinite(m) ? m : 0;
+  }
+
   update(dt: number): void {
+    // Eased in every mode (xr ignores it), so a switch back finds it settled.
+    if (this.lateralNow !== this.lateralTarget && dt > 0) {
+      this.lateralNow += (this.lateralTarget - this.lateralNow) * (1 - Math.exp(-dt / LATERAL_TAU));
+      if (Math.abs(this.lateralTarget - this.lateralNow) < 1e-4) this.lateralNow = this.lateralTarget;
+    }
     this.modes[this.current].update(dt, this.eye, this.focus);
   }
 

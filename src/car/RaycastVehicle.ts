@@ -186,6 +186,13 @@ const CLOSE_MIN = 6 * Math.PI / 180;
  * firmly than it damps an opening slide. */
 const CLOSE_STIFFNESS = 4;
 
+/** Written before the zero velocities in `reset()`. Havok ignores a velocity
+ * write only a hair from the body's current one: a car settled on the grid
+ * kept ~1e-7 rad/s through a plain zero write, so race 1 after a long title
+ * hold differed from race 1 after a short one. A clearly different value
+ * first makes the zero write always land. */
+const RESET_KICK = new Vector3(1, 1, 1);
+
 function clamp(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
 }
@@ -1966,6 +1973,8 @@ export class RaycastVehicle implements Vehicle {
     mesh.computeWorldMatrix(true);
     const body = this.chassisBody;
     body.disablePreStep = false;
+    body.setLinearVelocity(RESET_KICK);
+    body.setAngularVelocity(RESET_KICK);
     body.setLinearVelocity(Vector3.ZeroReadOnly);
     body.setAngularVelocity(Vector3.ZeroReadOnly);
     this.preStepFrames = 2;

@@ -723,6 +723,12 @@ export class RaceState {
     return this.phaseValue === 'countdown';
   }
 
+  /** Seconds of countdown left until GO (game time); 0 once racing. The
+   * music lines its count-in up with it. */
+  get countdownRemaining(): number {
+    return this.phaseValue === 'countdown' ? this.countdownLeft : 0;
+  }
+
   /** Seconds since GO. */
   get raceTime(): number {
     return this.raceClock;

@@ -124,6 +124,8 @@ const neonWasp: CarAsset = {
   category: 'car',
   spec: SPEC,
   liveries: LIVERIES.length,
+  // Swatch: shell / tube frame (yellow on violet on the sheet).
+  paints: LIVERIES.map((l) => ({ name: l.name, body: l.body, accent: l.cage })),
   build,
   triBudget: 60000,
   reference: {

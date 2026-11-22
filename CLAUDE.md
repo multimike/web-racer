@@ -50,7 +50,7 @@ seed → generateTerrain(seed) = WorldData        Babylon-free, ~0.2 s
   surface → backdrop hills → `await createWorldProps` (prop bakes join the
   pool; progress on the loading screen; `worldScatterDensity` thins quest
   scatter on heavy worlds) / flat: `createFlatArena` → cars one by one → camera rig, actions, dust, engine
-  sound, dev UI → the after-physics observer LAST (each vehicle's own
+  sound + music, dev UI → the after-physics observer LAST (each vehicle's own
   observers must run before it) → two warm-up frames → loop.
 - FRAME ORDER (one `dt` rule): `dt = beginPhysicsFrame(scene)` (sets Havok's
   step to the frame time clamped 1/240 … 1/20 s, so below 20 fps the game runs
@@ -60,7 +60,7 @@ seed → generateTerrain(seed) = WorldData        Babylon-free, ~0.2 s
   every `vehicle.update(dt)` → `scene.render()` steps Havok by the SAME dt →
   `onAfterPhysicsObservable`: `car.syncVisual` → `session.afterPhysics` (race,
   respawns, HUD) → camera rig → `props.update` (near ring) → shadow focus →
-  dust, engine sound, perf.
+  dust, engine sound + music, perf.
 - `src/boot/` — LOAD TIME. `gameBoot.ts` (`BootBakes`, `bootFlags`): asset
   preparation (builders, AO bakes, far models, car lite meshes) runs in a
   pool of `min(4, cores − 1)` module workers (`bakePool.ts`, `bakeWorker.ts`,
@@ -80,8 +80,11 @@ seed → generateTerrain(seed) = WorldData        Babylon-free, ~0.2 s
   `race.respawn(id)` → sideways shift if a car is in the way → `car.place`.
   `restart()` (Enter) resets every rival driver and pushes each chassis
   pose into Havok at once: race 1 replays bit-identically (`raycast`,
-  `hybrid`). The live page restarts the countdown once the loading panel
-  has faded (not with `?spot=`). Best lap: `localStorage` key
+  `hybrid`). With the game menu the session starts HELD (`held`,
+  `setHeld`: `race.update(0)`, the countdown stays at 3, respawn rules keep
+  running) and `menuLocked` gates the player's input; without it the live
+  page restarts the countdown once the loading panel has faded (not with
+  `?spot=`). Best lap: `localStorage` key
   `web-racer.bestLap.hills2-<seed>`,
   only for a human on the stock `raycast` car.
   `src/game/RaceState.ts` (lap logic, every metre a checkpoint, cuts) and
@@ -118,11 +121,71 @@ seed → generateTerrain(seed) = WorldData        Babylon-free, ~0.2 s
   slip-driven, surface-coloured dust per car (Babylon `ParticleSystem`, one
   draw call per car; bigger, clumpier puffs within 10–18 m of the camera).
 - `src/car/` — vehicle models (see Vehicles), `rig.ts` (per-car physics rig
-  from the design's `CarSpec`), `ai/` (rivals). `src/audio/` — sine-layer
-  engine sound (`EngineSound.ts`, hooked up in `carAudio.ts`; player only).
+  from the design's `CarSpec`), `ai/` (rivals). `src/audio/` — ONE
+  `AudioContext` (`AudioHub.ts`: autoplay unlock, hidden-tab suspend, peak
+  limiter) shared by the sine-layer engine sound (`EngineSound.ts`,
+  `carAudio.ts`; player only) and the race MUSIC (`music/`), both wired in
+  `gameAudio.ts`.
+- MUSIC (`src/audio/music/`): procedural, no audio files. `song.ts` = the
+  score ("Table Top Rally", A major, 160 BPM: a bar is 1.5 s, so the 3 s
+  countdown is 2 bars) as 16-step bar patterns (formats: `notes.ts`);
+  `instruments.ts` = synth voices (any `BaseAudioContext`, seeded noise);
+  `MusicPlayer.ts` = look-ahead sequencer + mixer (part buses, delay,
+  convolution reverb, kick-pumped pad, glue compressor). Moods from the
+  PLAYER's race (`moodFor`): countdown = hard cut to a count-in ending ON GO
+  (blips on the countdown seconds, output latency subtracted; re-aligns if GO
+  moves 0.2 s), racing = 72 s loop, last lap of 2+ = one-bar lift then the
+  choruses a whole tone up, finished = sting (fanfare for 1st or alone) then
+  the idle loop; flat arena = race loop. Ticked every frame AND by a 50 ms
+  timer. M toggles it (`localStorage` `web-racer.music`), `?music=0` drops it.
+  Levels: `MUSIC_LEVEL` (gameAudio.ts) × part `LEVEL` (MusicPlayer.ts) ×
+  the volume (default 0.7 ≈ −3 dB since 2026-11-23, owner's ask; the lab
+  measures volume 1);
+  measure with music-lab. Offline renders must never `disconnect()` (it acts
+  on the whole timeline; the live player drops cut segments after 3 s).
+  Measured 2026-11-22 (music-lab report): race −23.7 LUFS, peak −7.3 dBFS
+  before the limiter; the engine drone on the lab's scripted rpm −21.7 LUFS;
+  stems drums −26.9, melody −27.2, fx −28.4, bass −29, arp −33, chords
+  −36.3. Live game checked: one shared context, ~29 notes/s scheduled, M
+  toggles. NEVER HEARD BY ANYONE (only measured).
   `src/car/AutomaticGearbox.ts` is parked by owner decision (shifts inaudible).
 - `src/ui/` — `Hud`, `LoadingScreen`, `TuningPanel` (generic over
   `tuningSchema(vehicle)`), `DevOverlay`, `PerfOverlay`.
+- GAME MENU (spec + pictures: `design-documents/menu-mockups/SPEC.md`,
+  `final.html`, `final-*.png`; seams: `src/game/contracts/menu.ts`): title,
+  car, race setup, settings, controls, pause, confirm, post-race. A DOM
+  overlay (`.rmenu`, z-index 6) over the live world. `src/ui/menu/` —
+  `MenuModel.ts` (Babylon- and DOM-free state machine: screen stack, focus,
+  `running` / `staged` world values, `snapshot()`), `MenuView.ts` +
+  `menuCss.ts` + `glyphs.ts` (renderer; pointer → `MenuPointerAction`s),
+  `menuCars.ts` (car screen data from the assets' `paints`,
+  `HANDLING_PRESETS`, `rigFor`), `trackPreview.ts` + `trackWorker.ts`
+  (outlines; a staged seed is generated in a worker 300 ms after the last
+  change). `src/input/MenuInput.ts` — keys + every pad + pushed pointer
+  actions → one `MenuCommand` per frame (repeat, stick hysteresis, release
+  guard, `autoPause` on blur / hidden page / pad gone). `src/game/menuFlow.ts`
+  — reload, storage, `randomSeed`, `carStats`. createScene implements
+  `MenuHost` and exposes `game.menu`; `main.ts` calls `game.menu.boot()`
+  once the loading panel is gone. WORLD values (car, livery, seed, laps,
+  rivals, difficulty, quality) are staged and applied by ONE reload from a
+  "go racing" row (RACE, START RACE, NEXT TRACK), which lands in the 3-2-1
+  (one-shot `sessionStorage['web-racer.menu.next']`); camera and music
+  volume are live; the MUSIC row shows the EFFECTIVE level (OFF while the M
+  mute is on) and raising it clears the mute. PAUSE = the frame loop stops
+  simulating AND drawing (the canvas keeps its last frame; `redrawPaused()`
+  draws one still frame — car LODs re-picked for the new eye — after a
+  pause-menu camera change, a resize or the page shown again). A URL
+  `livery` past the car's paint count is wrapped; choosing that car and
+  paint again stages nothing. Small windows: below ~640 px of height the
+  13 px caption floor outgrows the unit, so `--grow` (`.rmenu-stage`)
+  widens the default band, the title rows and the car spec sheet; the post
+  stack is clamped inside the window (between 5:4 and ~7:5 its skewed lower
+  rows then reach over the finish panel's right rim). No menu at
+  all (today's page, bit for bit) with `shot`, `report`, `autopilot`,
+  `spot`, `countdown=0`, `terrain=flat` or `menu=0` (`menuEnabled`).
+  Storage: `web-racer.view` (chase / high / xr) and `web-racer.musicVolume`
+  (0 … 1) in `localStorage`, read at boot when the URL lacks `view` /
+  `music` (a URL value is stored), menu pages only.
 
 ## Game URL parameters (`src/game/options.ts`) and buttons
 
@@ -144,20 +207,31 @@ seed → generateTerrain(seed) = WorldData        Babylon-free, ~0.2 s
 | `nocache` | `1` \| `0` | skip / force the IndexedDB bake cache (shot pages default to `workers=0&nocache=1`) |
 | `bakehash` | `1` | put digests of every baked buffer in the report |
 | `backdrop` | `0` | hide the far hills (to measure them) |
+| `music` | 0 … 1 (0.7) | music volume; 0 = no music (M toggles in game) |
 | `tune` | `key:value,…` | player vehicle tuning; a malformed entry or an unknown key stops the boot; repeated `tune=` are merged |
 | `cuts` | `flash` \| `reset` | what a shortcut does (flash = "TRACK CUT", lap invalid until rejoined) |
 | `countdown` / `autopilot` / `dev` / `perf` | `0` / `1` / `1` / `1` | skip 3-2-1 / a RivalDriver drives the player / dev strip + tuning panel (a production build creates them ONLY with `dev=1`) / dc + tri readout |
 | `spot` | arc m \| `village` | start the player there |
 | `shot` | `1` (+ `at=<s>`) | screenshot mode: sync shader compile, `at` s at fixed 1/60, 3 frames, NO loop |
 | `report` | `1` (+ `seconds=<n>` (90), `liveboot=1`) | headless report protocol (`contracts/report.ts`); nobody drives the player without `autopilot=1`, so a gate-clean game run is `autopilot=1&report=1&seconds=130` (3 laps ≈ 95 s simulated) |
+| `menu` | `0` | no game menu (title / pause / post-race): the race starts after loading, Enter and pad Options restart, as before the menu. Never a menu with `shot`, `report`, `autopilot`, `spot`, `countdown=0`, `terrain=flat` |
+| `pausetest` / `titlehold` | s / frames | report mode only (parsed only with `report=1`; menu checks 5 / 6): take the pause path for 120 frames at `<s>` simulated seconds / hold the race like the title for `<frames>` frames, then start it like RACE. Compare with a plain run: `node tools/node/report-diff.mjs plain.json test.json` |
+| `menushot` | `title` \| `car` \| `setup` \| `settings` \| `controls` \| `pause` \| `confirm` (+ `menustaged=1`, `menukb=1`, `menufrom=paused`) | shot mode only: the REAL menu over the real world (title side holds the grid with the title camera; pause / confirm freeze the race at `at` s) |
 
 Keys: W A S D / arrows drive (S / Down = brake, held at standstill =
-reverse); R reset car; C cycle camera; Enter restart race; T tuning panel; H
-dev strip (T / H: production build only with `dev=1`). DualShock (standard
-mapping): left stick steer, R2 throttle (button 7 `.value`), L2 brake /
-reverse (button 6), Circle (1) reset, Triangle (3) camera, Options (9)
-restart. A focused form control blocks R / C / Enter / T / H only; sliders
-take the mouse only. Engine sound starts at the first click or key (a pad
+reverse); R reset car; C cycle camera; Esc or P pause (menu pages); Enter
+restart race (only with `menu=0` or `dev=1`; otherwise RESTART RACE is in the
+pause menu); M music on / off; T tuning panel; H dev strip (T / H:
+production build only with `dev=1`). DualShock (standard mapping): left
+stick steer, R2 throttle (button 7 `.value`), L2 brake / reverse (button 6),
+Circle (1) reset, Triangle (3) camera, Options (9) pause (restart with
+`menu=0`). In the menus: arrows / W S A D / D-pad / left stick move and
+change, Enter / Space / Cross select, Esc / Circle back, Delete / Backspace
+/ Square undo a staged value, R / Triangle random track, digits type a
+track number; while a menu is open R / C / Enter / Circle / Triangle never
+reset, cycle or restart, and the release guard swallows a button held
+through a screen change. A focused form control blocks R / C / Enter / M / T
+/ H and the menu keys only; sliders take the mouse only. Engine sound and music start at the first click or key (a pad
 press is no user activation by the HTML spec, so a pad-only session is
 expected to stay silent — not tested).
 
@@ -332,6 +406,28 @@ draw-call peak. Lighter clouds since: quest + xr seed 1 is 399,547.)
   (generated vs pack ground materials), `/hud-lab.html` (HUD on a real
   `RaceState`, `state=` pins any HUD state), `/solid-test.html` (temporary
   kit audit), `/sound-lab.html` (engine sound playground, standalone).
+- `/menu-lab.html` — the game menu over the mockup's backdrop pictures:
+  `screen=` (title car setup settings controls pause confirm post),
+  `state=` variants (staged kb countdown paused restart first chosen entry
+  endless skill unlock long), `focus=`, `bg=picture|color|none`,
+  `stage=WxH`, `src=model` (default: the REAL `MenuModel` + real car data,
+  driven live by the real `MenuInput`; its host only logs) / `src=mock`
+  (hand-built snapshots), `shot=1`, `report=1` (check 4: no text overflows
+  its row or the band, plates in the window, text ≥ 13 px / tags ≥ 11 px,
+  text inside its plate (`plateTextPx`, gated for the worst-case `long`
+  texts too) and no sticker / car tag over other text (`overlayTextPx`), at
+  1600×900, 1024×768, 900×600, 800×500 (the spec's minimum), 620×900, mock
+  and model; ungated worst-case `long` texts still overflow by 7–19 px: the
+  mock RACE sub-line at ≤ 900×600, post NEXT TRACK `TRACK 1101 · NEW
+  WORLD` at 800×500, mock and model). The real 3D world behind the
+  real menu: `/?shot=1&menushot=title` (table above).
+- `/music-lab.html` — the race music by mood button, part mutes, an engine
+  drone for balance, WAV download. `report=1` renders a scripted race
+  OFFLINE on the game's 1/60 clock and checks the score, GO / blip / lift /
+  sting timing (±1 ms), peak (≤ −3 dBFS before the limiter) and BS.1770
+  loudness per section and stem (matches ffmpeg `ebur128` to 0.1 LU);
+  `&wav=music|mix` adds the render: `node tools/node/report-wav.mjs out.json
+  out.wav`. A report run takes 1.5–5 min: run it in the background.
 - `tools/shot.sh "<path?query>" out.png [w] [h] [wait-ms]` — headless Chrome
   screenshot on a VIRTUAL clock: pages must compile shaders synchronously
   and render their frames synchronously in `shot=1` (it only sees the first
@@ -419,6 +515,12 @@ draw-call peak. Lighter clouds since: quest + xr seed 1 is 399,547.)
   unannounced jump is judged as a shortcut.
 - A brake still held from before `reset()` brakes; it does not turn into
   reverse until released once (lab check `pedals.respawnBrakeHeld`).
+- Havok IGNORES a velocity write only a hair from the body's current
+  velocity: `setAngularVelocity(0)` on a chassis settled at ~1e-7 rad/s
+  left it untouched (race 1 after a long title hold then differed).
+  `RaycastVehicle.reset` writes `RESET_KICK` (1, 1, 1) first, then zero.
+  The assist / hybrid / rigid resets (chassis and wheel bodies) still use
+  a plain zero write: untested, same trap.
 - Manual-step harnesses (`pe._step`) must call `mesh.computeWorldMatrix(true)`
   every step before `vehicle.update` — without `scene.render()` the cache
   goes stale and raycasts fire from old positions. Bodies fall asleep after
@@ -486,13 +588,26 @@ HUD; dust first, see gotchas); PWA manifest / icons / service worker; deep
 Babylon imports; a car's-eye view in the Quest budget (lite car shadows via
 a shadow-only layer in `src/gfx/look/shadows.ts`, lighter LOD 0 car, middle
 tree LOD); near / far cross-fade; per-surface grip; skid marks, rival
-engine sound, countdown / collision sounds, bloom, camera collision (the
-high camera looks through the gantry), pause menu, minimap; a ship-time
+engine sound, collision sounds, bloom, camera collision (the
+high camera looks through the gantry), minimap; menu UI blips (the model
+emits `blip` effects, nobody plays them); a rendered car portrait for the
+car screen (today the camera hops to that design on the grid, paint not
+previewed); a ship-time
 prebake; merged far chunks; heap / GPU stats; flying grit. The legacy hills
 road's two jump ramps were DROPPED (the flat arena keeps ramps; lab option
 `roadRamps`) — say so if they should come back.
 
 Owner decisions pending:
+- GAME MENU (feel test, SPEC 13): yellow focus (cyan stays "what is set");
+  Options = pause instead of instant restart; RESUME during the 3-2-1
+  restarts the countdown; NEXT TRACK = seed + 1 (not random); title camera
+  offset 0.8 m (chase; the spec's 2.2 m put the car at 79 % of the width,
+  under the NEXT RACE plate — 0.8 m puts it at ~63 %, as final-title.png) /
+  4 m (high) (`TITLE_OFFSET` in createScene.ts); whether the last setup should be
+  remembered across visits (today: URL only); the staged car shows the OLD
+  car on the grid until RACE reloads (alternative: reload to the title on
+  CHOOSE); portrait post-race: the 2 × 2 stack at `bottom: 10em` overlaps
+  the HUD's speed plate.
 - Sunlit Sand (G02): place it or keep it lab-only; `solid-test.html`:
   delete or keep. (There is no `public/` folder: the palm `.blend` / `.glb`
   were dropped, `dist/` is 12 MB.)
@@ -507,6 +622,17 @@ Owner decisions pending:
   120 / 144 Hz displays should trade resolution to hold 80 % of the rate.
 
 Known defects / limits:
+- Menu: FIXED 2026-11-23 — race 1 after a LONG title hold used to differ
+  from race 1 after a short one (`titlehold=600` vs `titlehold=1`, finishing
+  times 0.4–1.6 s apart): Havok ignored the zero-velocity write of a reset
+  on a car settled at ~1e-7 rad/s (see gotchas). Now `titlehold=600`
+  equals `titlehold=1` (43 race + 48 probe values) and `pausetest=40`
+  equals the plain run; plain vs `titlehold=1` still differ by one frame
+  of report bookkeeping (`moved30` +1, `simSeconds` 94.55 / 94.58), not
+  physics. Not checked for the assist / hybrid / rigid models. Menu checks run only headless; the
+  live menu was driven by hand in a throttled browser pane (~2 fps: two
+  taps inside one frame count once) — never by the owner, never with a pad,
+  never in Safari / on a Quest (does a paused canvas keep its frame there?).
 - Rivals: stand-in gates open — rival-at-fault contacts ~1.1 per race
   (limit 1), a few impacts over 10 m/s, `duel.k50k80` on seed 44,
   `s.fastBehind` on 7 of 48 files, `difficulty.normal` on unseen seeds,
@@ -559,6 +685,8 @@ and brake tap), opposite lock held out of a held drift, a skid held ~1 s
 then caught (swings too easily → raise `catchLinkTime`); the rivals on each
 difficulty and `fastCarRule`; `cuts=flash` vs `reset`; chase camera at speed
 and the high camera in hairpins (and the gantry lift); dust; engine sound;
+the music (taste, level against the engine, GO and blips heard on the
+digits, the final-lap lift, M);
 tuning sliders; any keyboard, gamepad or mouse input; the governor on a
 ratio-2 display; the production build; a Quest. A/B the `assist` / `hybrid`
 / `rigid` models with `rivals=0` (raycast rivals' wheel casts do not see

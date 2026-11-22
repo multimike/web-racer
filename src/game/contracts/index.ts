@@ -9,6 +9,7 @@
  *   camera.ts   CameraRig, ViewMode, GameActions
  *   quality.ts  QualitySettings (every performance knob, one object)
  *   report.ts   LabReport / FrameStats and the headless report protocol
+ *   menu.ts     the game menu: MenuCommand, MenuFacts, MenuHost, MenuModel, MenuSnapshot, MenuView
  */
 export type * from './world';
 export type * from './terrain';
@@ -17,3 +18,4 @@ export type * from './car';
 export type * from './camera';
 export type * from './quality';
 export type * from './report';
+export type * from './menu';
