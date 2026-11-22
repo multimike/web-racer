@@ -61,5 +61,18 @@ ready-to-host copy in `dist/`.
 Everything you see is built in code when the game loads: the cars, buildings,
 trees, the ground textures and the track. There are no model or image files.
 It is written in TypeScript with [Babylon.js](https://www.babylonjs.com) for
-graphics and [Havok](https://www.havok.com) for physics. The pictures the look
-is modelled on are in [`design-documents/`](design-documents/).
+graphics and [Havok](https://www.havok.com) for physics.
+
+## Design documents
+
+The game is modelled on a set of design sheets, kept in
+[`design-documents/`](design-documents/). Each pack holds the pictures plus a
+written brief per item.
+
+| Pack | What is in it |
+|---|---|
+| [Gameplay vision](design-documents/gameplay-vision/) | The two target pictures for the look: the [chase camera](design-documents/gameplay-vision/village-race-gameplay-vision.png) and the [high camera](design-documents/gameplay-vision/village-race-elevated-camera.png) |
+| [Buggies](design-documents/buggy-design-pack/) | The four cars: [Reef Rocket](design-documents/buggy-design-pack/reef-rocket/turnaround.png), [Neon Wasp](design-documents/buggy-design-pack/neon-wasp/turnaround.png), [Riot Ram](design-documents/buggy-design-pack/riot-ram/turnaround.png) and [Comet Fox](design-documents/buggy-design-pack/comet-fox/turnaround.png) |
+| [Buildings](design-documents/building-design-pack/) | [Shacks](design-documents/building-design-pack/shacks/design-sheet.png), [houses](design-documents/building-design-pack/houses/design-sheet.png), [village services](design-documents/building-design-pack/village-services/design-sheet.png) and [landmarks](design-documents/building-design-pack/village-landmarks/design-sheet.png) |
+| [Environment](design-documents/environment-design-pack/) | [Trees](design-documents/environment-design-pack/trees/design-sheet.png), [plants](design-documents/environment-design-pack/vegetation/design-sheet.png), [large rocks](design-documents/environment-design-pack/large-rocks/design-sheet.png) and [small rocks](design-documents/environment-design-pack/small-rocks/design-sheet.png) |
+| [Ground materials](design-documents/ground-material-pack/) | Notes and the generator script for the reference ground textures. The texture images themselves are not in this repository. |
