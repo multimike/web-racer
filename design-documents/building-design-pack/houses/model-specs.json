@@ -1,0 +1,119 @@
+{
+  "category": "VILLAGE HOUSES",
+  "assets": [
+    {
+      "id": "B04",
+      "slug": "gable-cottage",
+      "name": "Gable Cottage",
+      "category": "houses",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 6,
+        "depth_y": 5,
+        "total_height_z": 4.5
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 6.8,
+        "depth": 6.3
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Cream cottage with coral roof, teal shutters and a small chimney.",
+      "roof_and_height": "Gable ridge runs +Y; eave 2.8 m, ridge 4.5 m. One chimney near rear-right roof slope.",
+      "opening_schedule": "Front: centered door and one shuttered window on each side. Each side: one window. Rear: two small windows.",
+      "separate_parts": [
+        "plaster_shell",
+        "stone_plinth",
+        "gable_roof",
+        "fascia",
+        "chimney",
+        "front_canopy",
+        "door",
+        "window_and_shutter_modules",
+        "steps"
+      ],
+      "construction_notes": "Use broad standing seams to match the delivered artwork. Windows share one frame design, and each shutter is a separate optional piece.",
+      "view_resolution": "The generation brief suggested broad tiles; the delivered sheet uses seam-like roof panels. Use the delivered broad-seam roof. Keep chimney on the same rear-right roof slope in all views.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    },
+    {
+      "id": "B05",
+      "slug": "terrace-house",
+      "name": "Terrace House",
+      "category": "houses",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 5,
+        "depth_y": 5,
+        "total_height_z": 4.5
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 5.8,
+        "depth": 6.8
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Turquoise flat-roof home with coral entry, rooftop pergola and solar panel.",
+      "roof_and_height": "Flat roof deck at 2.8 m, parapet top 3.3 m, pergola top 4.5 m.",
+      "opening_schedule": "Front: two narrow windows left of the door, door offset right. Sides: one narrow window each. Rear: external stair and plain wall.",
+      "separate_parts": [
+        "rounded_wall_shell",
+        "plinth",
+        "roof_deck",
+        "parapet",
+        "pergola",
+        "railing_modules",
+        "rear_stair",
+        "door",
+        "narrow_windows",
+        "solar_panel"
+      ],
+      "construction_notes": "Rear stair rises to the roof deck: reserve a strip behind the rear wall. Place pergola on the left roof half when seen from the front and solar panel on the right. Provide a clear landing at the top of stair.",
+      "view_resolution": "Side view omits the pergola; it remains present in the model. Use about 4.0 m horizontal run, 1.0 m stair width and 2.8 m rise for a stylized pedestrian stair; fit the rear landing before detailing.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    },
+    {
+      "id": "B06",
+      "slug": "corner-house",
+      "name": "Corner House",
+      "category": "houses",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 5,
+        "depth_y": 4,
+        "total_height_z": 6.5
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 5.8,
+        "depth": 5.8
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Apricot two-story home with cobalt hip roof and teal balcony.",
+      "roof_and_height": "Two 2.7 m stories, hipped roof from 5.4 m to 6.5 m.",
+      "opening_schedule": "Front ground floor: door left, window right. Front upper floor: balcony opening. Each side: one window per story. Rear: two vertically aligned windows.",
+      "separate_parts": [
+        "wall_shell",
+        "plinth",
+        "interstory_band",
+        "hip_roof",
+        "balcony_deck",
+        "balcony_brackets",
+        "balcony_rails",
+        "door",
+        "upper_balcony_door",
+        "windows"
+      ],
+      "construction_notes": "Balcony projects 0.9 m from front and has a solid underside. Make the upper opening a full-height glazed balcony door instead of an inaccessible window. Separate rails for reuse.",
+      "view_resolution": "The sheet shows a window-like upper opening. Extend its lower portion to balcony floor level so the balcony is usable; preserve its width and frame styling.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    }
+  ]
+}
+

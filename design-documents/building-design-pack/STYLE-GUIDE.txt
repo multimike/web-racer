@@ -1,0 +1,61 @@
+BUILDING STYLE GUIDE — ORIGINAL BUGGY WORLD
+
+STYLE
+A friendly village with colorful painted timber and plaster, chunky cream trim, broad roof seams and lavender-gray stone foundations. Match the original clean buggies and natural props. Buildings use simpler, quieter detail than the cars so racers remain legible.
+The futuristic touch is restrained: small solar panels, rounded lamps and the garage's industrial forms. No ruins, wasteland armor or heavy rust.
+
+MATERIAL TARGETS
+palette.json provides proposed sRGB base colors.
+Plaster: metallic 0, roughness 0.70–0.85.
+Painted timber: metallic 0, roughness 0.60–0.80.
+Painted roof metal: metallic 0 for the coating, roughness 0.35–0.50.
+Exposed metal: metallic 1, roughness 0.35–0.50.
+Stone: metallic 0, roughness 0.80–0.95.
+Awning fabric: metallic 0, roughness 0.80.
+Window glass/recesses: use simple dark teal material or shallow interior box; avoid realistic mirror reflections if they distract.
+Keep emission only on lamps. Solar cells are dark blue, not glowing.
+
+FORM AND DETAIL
+Broad rounded edges, thick fascia, oversized readable handles and simple plank seams.
+Suggested visible trim widths 0.12–0.20 m, important edge bevels 0.03–0.08 m. These are stylized art targets, not construction guidance.
+Main roof overhangs typically 0.30 m. Use 0.50 m composition grid for main masses and 0.10 m grid for trim where convenient.
+Do not force every architectural component onto a grid at the expense of the design.
+
+REUSABLE PARTS
+D01 single door: nominal opening 1.0 × 2.2 m.
+D02 shed double door: nominal opening 1.8 × 2.2 m.
+D03 public double door: nominal opening 1.8 × 2.4 m.
+W01 square window: nominal opening 1.0 × 1.0 m.
+W02 narrow window: nominal opening 0.45 × 1.1 m.
+W03 serving window: nominal opening 2.2 × 1.2 m.
+R01 railing segment: suggested length 1.0 m, height 1.0 m.
+P01 square porch post: suggested section 0.20 × 0.20 m.
+F01 stone plinth segment: roughly 1 m long and 0.4 m high; vary facets.
+L01 rounded wall lamp: reuse the same chunky casing.
+S01 small roof solar panel: roughly 1.2 × 0.8 m.
+These are modeling suggestions. Openings in the images are illustrative; adjust wall layouts without changing the building's main character.
+
+BUILDING VARIANTS
+Warm: cream walls, coral roof, teal frames.
+Coastal: turquoise walls, cobalt roof, cream frames.
+Sunny: mustard walls, teal roof, coral door.
+Village houses can use these three paint combinations without changing topology.
+Keep stone, timber and cream trim consistent across the village. Use brighter cobalt/orange mainly for the garage.
+
+ORIENTATION
+Meters, +Z up. Pivot at center of front wall at ground level. +Y extends from front facade into the building; +X is screen-right in front elevation. Front porches/stairs extend toward negative Y.
+This is a building assembly convention. Convert to the target engine on export.
+The main footprint excludes attachments. Check each brief's larger placement envelope. These are blockout allowances, not guaranteed clearance volumes.
+
+VIEW CONSISTENCY
+Images were generated as design references, not calibrated orthographic drawings. Use the written opening schedules, roof directions and explicit resolutions in the briefs.
+B02: a single X-sloping roof plane overrides conflicting side/rear roof lines.
+B03: six main stilts in a 3×2 plan.
+B04: broad roof seams follow the delivered art.
+B05: roof pergola is present even where the side inset omits it.
+B06: the balcony opening becomes a full-height glazed door.
+B07: longitudinal barrel axis +Y; a straight side eave replaces the incorrect arched side inset.
+B09: one rear ladder only.
+B10: main gable ridge runs across X; tower top 7.5 m.
+Do not copy inconsistent image views into incompatible meshes.
+

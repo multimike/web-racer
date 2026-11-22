@@ -1,0 +1,63 @@
+{
+  "version": "1.2",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "materials": [
+    {
+      "id": "G01",
+      "slug": "rally-dirt",
+      "name": "Rally Dirt",
+      "seed": 317,
+      "tile_m": 4.0,
+      "relief_m": 0.035,
+      "description": "Warm compacted dirt with soft clumps and sparse pale grains."
+    },
+    {
+      "id": "G02",
+      "slug": "sunlit-sand",
+      "name": "Sunlit Sand",
+      "seed": 421,
+      "tile_m": 4.0,
+      "relief_m": 0.025,
+      "description": "Golden cream sand with gentle, warped wind ripples. No baked sun lighting."
+    },
+    {
+      "id": "G03",
+      "slug": "meadow-grass",
+      "name": "Meadow Grass",
+      "seed": 557,
+      "tile_m": 4.0,
+      "relief_m": 0.025,
+      "description": "Short stylized jade and lime ground cover with broad overlapping blades."
+    },
+    {
+      "id": "G04",
+      "slug": "lavender-gravel",
+      "name": "Lavender Gravel",
+      "seed": 683,
+      "tile_m": 4.0,
+      "relief_m": 0.055,
+      "description": "Small lavender-gray and warm cream stones in a muted earth matrix."
+    },
+    {
+      "id": "G05",
+      "slug": "worn-asphalt",
+      "name": "Worn Asphalt",
+      "seed": 829,
+      "tile_m": 4.0,
+      "relief_m": 0.006,
+      "description": "Cool slate asphalt with subtle repairs and scattered aggregate. No lane markings."
+    },
+    {
+      "id": "G06",
+      "slug": "village-cobblestone",
+      "name": "Village Cobblestone",
+      "seed": 947,
+      "tile_m": 4.0,
+      "relief_m": 0.04,
+      "description": "Irregular interlocking cream and lavender-gray flagstones, with varied sizes and no directional rows."
+    }
+  ]
+}

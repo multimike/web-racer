@@ -1,0 +1,57 @@
+B09 — WATER TOWER — MODELING BRIEF v1.0
+
+DESIGN
+Coral cylindrical tank with teal conical cap on four timber supports.
+Use the matching labeled column of design-sheet.png. These are design references, not finished meshes or exact CAD drawings.
+
+PROPOSED SCALE
+Main body: 4 m wide X × 4 m deep Y.
+Total height: 8 m.
+Reserve at least 5 × 5 m for the building and attachments during blockout.
+Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.
+Building masses are shown at different display sizes on the sheets; do not infer relative size from pixels.
+
+ROOF AND HEIGHTS
+Maintenance platform around Z=4.4 m; tank base 4.7 m; tank top 6.9 m; roof cap top 8.0 m. Tank diameter 3.4 m.
+
+OPENING SCHEDULE
+One rear access ladder, one right-side discharge pipe; no front ladder.
+Left/right refer to the front elevation. Use shared nominal pedestrian doors 1.0 m wide × 2.2 m high unless noted otherwise. Window sizes are art targets; adapt within the proposed wall layout.
+
+SEPARATE MODEL PARTS
+four_legs, cross_braces, four_footings, platform, platform_rails, tank_shell, tank_bands, conical_roof, ladder, discharge_pipe
+
+CONSTRUCTION
+Exactly four main legs at corners of a 3.4 m square. Splay feet slightly outward within 4 m footprint. Keep braces behind the ladder. Add a maintenance platform gate where ladder meets it.
+
+RESOLVE THE VIEWS
+The hero appears to show a front-side ladder while the REAR view shows rear access. Use one rear ladder only, following the written layout. Render scale is squat; use the proposed height if a tall landmark is desired.
+Some reference insets have perspective or small geometry discrepancies. Build one coherent model using this written brief for layout, the main image for styling, and the supporting views for further shape guidance.
+
+ORIGIN AND ORIENTATION
+At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.
+Meters, +X right in front view, +Y into building from front facade, +Z up.
+Use hinge pivots for doors and shutters; keep source meshes at unscaled unit transforms before export.
+
+MATERIALS
+Follow palette.json and STYLE-GUIDE.txt. Separate wall, roof, trim, timber, stone, glass, lamp and optional decal regions. Keep medium-size bevels and readable trim. Avoid tiny plank grain or noisy plaster.
+Matte plaster and timber, satin painted metal roofs, dark glass/recesses. Only actual lamps need emissive masks. No daytime neon outline around the building.
+
+REUSE AND VARIATION
+Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved.
+Use complete buildings as placement assets; reusable window, door, roof-trim and railing modules reduce modeling work. The illustrations do not establish a fully interchangeable wall-panel kit.
+
+COLLISION AND INTERIORS
+Use simple collision aligned with main walls. Doors and vehicle bays should remain clear only if the game allows entry.
+Model shallow recess boxes for windows and non-enterable openings so the low chase camera cannot see through walls.
+Close back faces, roof undersides and foundations visible during jumps. Detailed furnished interiors are outside this design pack.
+For the garage, verify the bay opening with the widest buggy and use collision that respects the actual opening.
+
+MODELING SEQUENCE
+1. Block out the body, roof and attachments at the proposed dimensions.
+2. Check with a buggy proxy: up to 3.70 m long, 2.25 m wide and roughly 2 m high.
+3. Place openings from the schedule; resolve view inconsistencies before detailing.
+4. Build trim, frames, roof sections and reusable parts. Close exposed undersides.
+5. Apply palettes and restrained material variation. Tune budget, LODs and textures for the target game platform.
+6. Review from the actual chase camera, around corners and during jumps.
+

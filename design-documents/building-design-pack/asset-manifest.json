@@ -1,0 +1,167 @@
+{
+  "version": "1.0",
+  "asset_count": 10,
+  "assets": [
+    {
+      "id": "B01",
+      "name": "Sunshack",
+      "category": "shacks",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 3,
+        "total_height_z": 3.3
+      },
+      "placement_envelope_m": {
+        "width": 4.8,
+        "depth": 4.6
+      },
+      "brief": "shacks/b01-sunshack-brief.txt",
+      "sheet": "shacks/design-sheet.png"
+    },
+    {
+      "id": "B02",
+      "name": "Workshop Shed",
+      "category": "shacks",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 3.5,
+        "total_height_z": 3.3
+      },
+      "placement_envelope_m": {
+        "width": 4.8,
+        "depth": 4.2
+      },
+      "brief": "shacks/b02-workshop-shed-brief.txt",
+      "sheet": "shacks/design-sheet.png"
+    },
+    {
+      "id": "B03",
+      "name": "Stilt Hut",
+      "category": "shacks",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 4,
+        "total_height_z": 4.6
+      },
+      "placement_envelope_m": {
+        "width": 4.8,
+        "depth": 6.8
+      },
+      "brief": "shacks/b03-stilt-hut-brief.txt",
+      "sheet": "shacks/design-sheet.png"
+    },
+    {
+      "id": "B04",
+      "name": "Gable Cottage",
+      "category": "houses",
+      "main_body_dimensions_m": {
+        "width_x": 6,
+        "depth_y": 5,
+        "total_height_z": 4.5
+      },
+      "placement_envelope_m": {
+        "width": 6.8,
+        "depth": 6.3
+      },
+      "brief": "houses/b04-gable-cottage-brief.txt",
+      "sheet": "houses/design-sheet.png"
+    },
+    {
+      "id": "B05",
+      "name": "Terrace House",
+      "category": "houses",
+      "main_body_dimensions_m": {
+        "width_x": 5,
+        "depth_y": 5,
+        "total_height_z": 4.5
+      },
+      "placement_envelope_m": {
+        "width": 5.8,
+        "depth": 6.8
+      },
+      "brief": "houses/b05-terrace-house-brief.txt",
+      "sheet": "houses/design-sheet.png"
+    },
+    {
+      "id": "B06",
+      "name": "Corner House",
+      "category": "houses",
+      "main_body_dimensions_m": {
+        "width_x": 5,
+        "depth_y": 4,
+        "total_height_z": 6.5
+      },
+      "placement_envelope_m": {
+        "width": 5.8,
+        "depth": 5.8
+      },
+      "brief": "houses/b06-corner-house-brief.txt",
+      "sheet": "houses/design-sheet.png"
+    },
+    {
+      "id": "B07",
+      "name": "Race Garage",
+      "category": "village-services",
+      "main_body_dimensions_m": {
+        "width_x": 9,
+        "depth_y": 7,
+        "total_height_z": 4.8
+      },
+      "placement_envelope_m": {
+        "width": 10,
+        "depth": 8
+      },
+      "brief": "village-services/b07-race-garage-brief.txt",
+      "sheet": "village-services/design-sheet.png"
+    },
+    {
+      "id": "B08",
+      "name": "Market Hall",
+      "category": "village-services",
+      "main_body_dimensions_m": {
+        "width_x": 8,
+        "depth_y": 5,
+        "total_height_z": 4.2
+      },
+      "placement_envelope_m": {
+        "width": 8.8,
+        "depth": 6.8
+      },
+      "brief": "village-services/b08-market-hall-brief.txt",
+      "sheet": "village-services/design-sheet.png"
+    },
+    {
+      "id": "B09",
+      "name": "Water Tower",
+      "category": "village-landmarks",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 4,
+        "total_height_z": 8
+      },
+      "placement_envelope_m": {
+        "width": 5,
+        "depth": 5
+      },
+      "brief": "village-landmarks/b09-water-tower-brief.txt",
+      "sheet": "village-landmarks/design-sheet.png"
+    },
+    {
+      "id": "B10",
+      "name": "Village Hall",
+      "category": "village-landmarks",
+      "main_body_dimensions_m": {
+        "width_x": 8,
+        "depth_y": 6,
+        "total_height_z": 7.5
+      },
+      "placement_envelope_m": {
+        "width": 9,
+        "depth": 8
+      },
+      "brief": "village-landmarks/b10-village-hall-brief.txt",
+      "sheet": "village-landmarks/design-sheet.png"
+    }
+  ]
+}
+

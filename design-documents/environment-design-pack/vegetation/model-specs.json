@@ -1,0 +1,206 @@
+{
+  "category": "VEGETATION",
+  "assets": [
+    {
+      "id": "V01",
+      "slug": "puff-bush",
+      "name": "Puff Bush",
+      "category": "vegetation",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 1.8,
+        "depth_y": 1.5,
+        "height_z": 1.3
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Low asymmetric mound with rounded foliage lobes.",
+      "features": "Five main overlapping canopy lobes and short stems.",
+      "separate_parts": [
+        "stem_cluster",
+        "foliage_01..05"
+      ],
+      "collision_recommendation": "Nonblocking by default; optional soft overlap response.",
+      "animation_recommendation": "Base-pinned low-amplitude lobe sway.",
+      "modeling_notes": "The sheet adds some small lobes; treat those as optional silhouette accents. Keep five principal masses for a simple blockout.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "foliage",
+        "bark"
+      ]
+    },
+    {
+      "id": "V02",
+      "slug": "ribbon-grass",
+      "name": "Ribbon Grass",
+      "category": "vegetation",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 0.85,
+        "depth_y": 0.75,
+        "height_z": 0.65
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "A fan of broad curved ribbon blades.",
+      "features": "Nine to twelve blades with a slight central fold.",
+      "separate_parts": [
+        "blade_01..12"
+      ],
+      "collision_recommendation": "Nonblocking.",
+      "animation_recommendation": "Anchor every blade at the base; increasing bend toward tips.",
+      "modeling_notes": "Use wide tapered strips with readable edges. Do not substitute many hair-thin blades. Fewer solid blades can suit this style better than dense alpha cards.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "foliage",
+        "bark"
+      ]
+    },
+    {
+      "id": "V03",
+      "slug": "fan-fern",
+      "name": "Fan Fern",
+      "category": "vegetation",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 1.25,
+        "depth_y": 1.1,
+        "height_z": 0.85
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "A spreading rosette of arching fronds.",
+      "features": "Six main fronds, each with five to seven paired leaflets.",
+      "separate_parts": [
+        "frond_01..06",
+        "stem_core"
+      ],
+      "collision_recommendation": "Nonblocking.",
+      "animation_recommendation": "Root-pinned frond bend; minimal motion at the crown.",
+      "modeling_notes": "The lower reference is an elevated view rather than a calibrated top projection. Establish a true radial plan in 3D. Build leaflets in repeated pairs, then vary rotation slightly.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "foliage",
+        "bark"
+      ]
+    },
+    {
+      "id": "V04",
+      "slug": "spike-rosette",
+      "name": "Spike Rosette",
+      "category": "vegetation",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 1.15,
+        "depth_y": 1.1,
+        "height_z": 0.75
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "A dense blue-green succulent rosette.",
+      "features": "Seven to nine thick pointed leaves with blunt ends.",
+      "separate_parts": [
+        "leaf_01..09",
+        "central_core"
+      ],
+      "collision_recommendation": "Nonblocking by default.",
+      "animation_recommendation": "Very little wind motion; leaves should feel heavier than grass.",
+      "modeling_notes": "Avoid needle-sharp tips. Use thick convex leaves and a clear central fold. Lime edge color is paint/material color, not emission.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "succulent"
+      ]
+    },
+    {
+      "id": "V05",
+      "slug": "coral-blooms",
+      "name": "Coral Blooms",
+      "category": "vegetation",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 0.8,
+        "depth_y": 0.65,
+        "height_z": 0.55
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Three bold coral flowers above short green foliage.",
+      "features": "Three flower heads at staggered heights; broad leaves.",
+      "separate_parts": [
+        "stem_cluster",
+        "leaves",
+        "flower_head_01..03",
+        "flower_center_01..03"
+      ],
+      "collision_recommendation": "Nonblocking.",
+      "animation_recommendation": "Bend stems gently; keep each flower head coherent.",
+      "modeling_notes": "Use six broad petals per flower to match the generated main image, resolving the prompt's earlier five-petal suggestion. Keep a simple raised yellow center and no tiny stamens.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "foliage",
+        "flowers"
+      ]
+    }
+  ]
+}
+

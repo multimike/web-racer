@@ -1,0 +1,76 @@
+RIOT RAM — MODELING HANDOFF v1.0
+
+PURPOSE
+Build the original clean, colorful futuristic buggy. Use turnaround.png for visual reference and ../original-concepts.png for the approved original styling. This package contains concept references, not a finished 3D model or exact CAD blueprints. Rear and hidden surfaces are proposed continuations.
+
+PROPOSED SCALE
+All values below are suggested art-direction dimensions. They can be scaled together to fit the game's driver and tracks. Width is maximum static tire-to-tire width; height includes fins, fans and lights. Track is wheel center to wheel center. Overhangs are measured from axle centers to the outer longitudinal extent. Chassis clearance refers to the floor, not the lowest decorative nose tip.
+  length: 3.500 m
+  width: 2.250 m
+  height: 1.980 m
+  wheelbase: 2.300 m
+  front track: 1.790 m
+  rear track: 1.790 m
+  front tire diameter: 1.000 m
+  rear tire diameter: 1.000 m
+  front tire width: 0.460 m
+  rear tire width: 0.460 m
+  front overhang: 0.600 m
+  rear overhang: 0.600 m
+  chassis ground clearance: 0.400 m
+  cage tube diameter: 0.075 m
+
+COORDINATES AND WHEELS
+Meters. +Y forward, +X right, +Z up. Origin: centerline at ground level midway between axles. Neutral wheel spin axis: X.
+Wheel center positions [X, Y, Z]:
+  FL: [-0.895, 1.15, 0.5]
+  FR: [0.895, 1.15, 0.5]
+  RL: [-0.895, -1.15, 0.5]
+  RR: [0.895, -1.15, 0.5]
+FL/FR/RL/RR mean front-left/front-right/rear-left/rear-right as viewed from the driver's seat. In the left-side image the nose points left.
+
+DESIGN AND CONSISTENCY NOTES
+1. Silhouette priority: the broadest and most square of the four, with equal-size oversized tires, cobalt cage and hood, orange fenders, and bright lime springs.
+2. Use clean manufactured panels and beveled edges. The original concept is the authority: no rust, patchwork armor, mesh windshield, plow, roof spare or tall exhaust stacks.
+3. Build a wide silver lower bumper/skid plate with FOUR geometric cutouts, as in the original concept. The generated turnaround simplifies this to three; use four for the model.
+4. The roof light contains three distinct warm-white cells. The two hood stripes and paired side stripes are flat white decals.
+5. Rear motor cover, rear tail lamps and rear cross-member are proposed completions. Keep the motor low so the rear cage outline stays visible.
+6. Keep fenders attached to the sprung chassis, not to wheel rotation. Make the four shocks individually articulated for the large suspension travel.
+
+COLOR TARGETS
+Suggested sRGB base colors; lit pixels in the renders are not reliable color samples.
+  body_cobalt: #244BCC
+  panels_orange: #FF7D17
+  springs_lime: #C9EE18
+  stripe_white: #F5F2E9
+  rubber: #29292F
+  metal: #A7ABB2
+
+MATERIAL STARTING POINTS
+Paint: metallic 0, roughness 0.30. Painted tubes: metallic 0, roughness 0.36. Bare metal: metallic 1, roughness 0.32. Rubber: metallic 0, roughness 0.83. Seat fabric: metallic 0, roughness 0.90. These are starting values, to be tuned under the game's lighting. Use a separate emissive mask for glowing lights and boost parts.
+
+SEPARATE MODEL PARTS
+chassis, roll_cage, floor_pan, seat, harness, dashboard, steering_wheel, tire_FL, rim_FL, hub_FL, upright_FL, upper_arm_FL, lower_arm_FL, shock_body_FL, shock_rod_FL, spring_FL, tire_FR, rim_FR, hub_FR, upright_FR, upper_arm_FR, lower_arm_FR, shock_body_FR, shock_rod_FR, spring_FR, tire_RL, rim_RL, hub_RL, upright_RL, upper_arm_RL, lower_arm_RL, shock_body_RL, shock_rod_RL, spring_RL, tire_RR, rim_RR, hub_RR, upright_RR, upper_arm_RR, lower_arm_RR, shock_body_RR, shock_rod_RR, spring_RR, hood, side_panel_L, side_panel_R, fender_FL, fender_FR, fender_RL, fender_RR, front_bash_plate, roof_light_three_cell, rear_motor_cover
+
+ANIMATION AND ASSEMBLY
+- Root at the specified origin; bind chassis to vehicle body control.
+- Wheel pivots at axle centers. Keep tire and rim aligned; steering upright parents wheel spin on front corners.
+- Pivot suspension arms at inboard attachment points; use look-at/constraints or baked animation for shocks.
+- Keep steering wheel, springs, fan rotors and emissive boost meshes separate as applicable.
+- Leave fenders and cage on the chassis; test wheel clearance at full steering, bump and droop.
+- Export axes depend on the target engine; the coordinate convention here is the modeling master convention.
+
+MODELING ORDER
+1. Place four wheel cylinders using the positions and tire sizes above. Block out the floor, seat, nose, cage, and signature rear feature.
+2. Check silhouette from front, side, top and the game's chase camera. Fit the intended driver and steering controls.
+3. Resolve the approximate image views into one coherent 3D model, following the consistency notes. Do not expect all views to align as pixel-exact blueprints.
+4. Build separate panels, suspension, wheels, cockpit and propulsion parts. Mirror structural geometry; keep graphics independently oriented on each side.
+5. Add thickness to visible shells, cap tube ends, and use a simple enclosed undertray between chassis rails. Hidden underside plumbing is not prescribed.
+6. Add UVs, paint/graphic masks, roughness variation and emissive masks. Keep branding graphics sharp and bold.
+7. Test steering and suspension clearance. Set platform-specific mesh, texture, collision and LOD budgets once the game engine and camera distance are known.
+
+REFERENCE PRIORITY
+1. Original concept sheet for character, silhouette, colors and visible styling
+2. This written specification for proposed dimensions and explicit consistency resolutions
+3. Turnaround sheet for supplemental shape guidance; new hidden surfaces are design proposals
+

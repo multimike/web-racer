@@ -1,0 +1,16 @@
+Tool: built-in image_gen.
+Primary style reference: original buggy concept sheet.
+Additional reference: large-rocks/design-sheet.png.
+
+Use case: stylized-concept. Asset type: production concept reference sheet for later 3D modeling of environment props for a colorful action-packed buggy racing videogame.
+The attached original buggy sheet is a STYLE REFERENCE ONLY. Match its polished stylized 3D rendering, bold readable silhouettes, exaggerated chunky shapes, saturated but controlled color, broad bevels and clean surfaces. Draw only the requested natural environment props, no vehicles. Organic materials are matte with simple broad tonal gradients, not glossy plastic or photorealistic leaf scans. The result should belong beside those original clean futuristic buggies.
+Plain near-white background, generous spacing, crisp large landscape reference sheet, every prop entirely in frame. Consistent neutral studio lighting, minimal soft contact shadow, no environment, no pedestals, no ground patches except the asset's own base. Show the same geometry consistently in all views for each prop. Orthographic views use parallel projection. Titles and short asset labels in clean dark typography, no paragraphs or dimension numbers. Clear medium-complexity forms readable at racing speed. No tiny noisy surface detail, no rust, no mechanical plant parts, no bioluminescence, no faces.
+The second attached image is the approved LARGE ROCKS sheet, a material and shape-language reference. Match its lavender/slate sides, warm cream upper planes and broad soft-edged facets exactly, but make the five new small shapes described below.
+Title: SMALL ROCKS. Five evenly spaced columns of isolated natural stone designs. Each column has a large three-quarter perspective above and true orthographic TOP view below. Exact labels: S01 PEBBLE; S02 WEDGE; S03 FLAT SLAB; S04 CHIP CLUSTER; S05 BROKEN CHUNK. These are ground-scatter props, no terrain, sand, plants or ground patches. Match the big rocks: matte lavender-slate blue-gray sides, warm cream upper planes and muted cool purple shadows, chunky clipped corners, simple clean faceted silhouettes, no photoreal grain, no crystals, no moss. Equal display size for legibility, not shared world scale.
+S01 PEBBLE: smooth squashed irregular pebble with five or six broad softly beveled planes, around 0.3 m across and 0.16 m high.
+S02 WEDGE: angular triangular stone with one sharp readable ridge, around 0.55 m long and 0.32 m high.
+S03 FLAT SLAB: low oblong flat stone with a chipped corner and thin chunky bevel, around 0.9 m long and 0.18 m high.
+S04 CHIP CLUSTER: exactly three separate small irregular stones arranged in a loose triangular group with visible gaps. Each stone shape remains identifiable in top and perspective views. Entire group about 0.75 m across and 0.22 m high. No fused base.
+S05 BROKEN CHUNK: medium upright irregular polygonal rock with one broad fracture face and one shallow crack, about 0.65 m across and 0.5 m high.
+Keep shape-specific distinctions strong, not five color variants of the same pebble. Small flat palette swatches at bottom.
+

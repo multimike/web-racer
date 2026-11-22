@@ -1,0 +1,120 @@
+{
+  "category": "LARGE ROCKS",
+  "assets": [
+    {
+      "id": "R01",
+      "slug": "shoulder-boulder",
+      "name": "Shoulder Boulder",
+      "category": "large-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 3.2,
+        "depth_y": 2.6,
+        "height_z": 2.4
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Squat, broad asymmetric boulder with a sloping top.",
+      "features": "One broad upper plane and a deliberate shallow front-left groove.",
+      "separate_parts": [
+        "rock_body"
+      ],
+      "collision_recommendation": "One low-complexity convex proxy; ignore decorative shallow grooves.",
+      "animation_recommendation": "Static.",
+      "modeling_notes": "The groove must not split the asset into two unrelated stones. Add an unseen closed underside and a short buried skirt.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.8,
+          1.2
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    },
+    {
+      "id": "R02",
+      "slug": "split-fin",
+      "name": "Split Fin",
+      "category": "large-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 2.3,
+        "depth_y": 1.5,
+        "height_z": 4.2
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Tall narrow wedge with a forked upper silhouette.",
+      "features": "An off-center notch extending downward from the top; solid connected base.",
+      "separate_parts": [
+        "rock_body"
+      ],
+      "collision_recommendation": "Two or three simple convex pieces; preserve a visible gap only if it affects gameplay.",
+      "animation_recommendation": "Static.",
+      "modeling_notes": "Model a single continuous base. The notch ends above ground, around mid-height. Choose a fixed front/notch orientation and reconcile the lower views to it.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.8,
+          1.2
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    },
+    {
+      "id": "R03",
+      "slug": "terrace-stack",
+      "name": "Terrace Stack",
+      "category": "large-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 4.2,
+        "depth_y": 3,
+        "height_z": 2.1
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Wide, low outcrop with three clear steps.",
+      "features": "Three interlocking ledges forming one stable outcrop.",
+      "separate_parts": [
+        "rock_body or three interlocking ledge meshes"
+      ],
+      "collision_recommendation": "A few convex volumes following the ledges.",
+      "animation_recommendation": "Static.",
+      "modeling_notes": "Ledges rise front to back. They are set dressing unless the level intentionally makes them drivable; collision then needs a separate driving-surface pass. Avoid tiny cracks in the silhouette.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.8,
+          1.2
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    }
+  ]
+}
+

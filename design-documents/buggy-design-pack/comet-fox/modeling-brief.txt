@@ -1,0 +1,76 @@
+COMET FOX — MODELING HANDOFF v1.0
+
+PURPOSE
+Build the original clean, colorful futuristic buggy. Use turnaround.png for visual reference and ../original-concepts.png for the approved original styling. This package contains concept references, not a finished 3D model or exact CAD blueprints. Rear and hidden surfaces are proposed continuations.
+
+PROPOSED SCALE
+All values below are suggested art-direction dimensions. They can be scaled together to fit the game's driver and tracks. Width is maximum static tire-to-tire width; height includes fins, fans and lights. Track is wheel center to wheel center. Overhangs are measured from axle centers to the outer longitudinal extent. Chassis clearance refers to the floor, not the lowest decorative nose tip.
+  length: 3.700 m
+  width: 2.050 m
+  height: 1.870 m
+  wheelbase: 2.550 m
+  front track: 1.590 m
+  rear track: 1.570 m
+  front tire diameter: 0.720 m
+  rear tire diameter: 1.020 m
+  front tire width: 0.320 m
+  rear tire width: 0.480 m
+  front overhang: 0.640 m
+  rear overhang: 0.510 m
+  chassis ground clearance: 0.280 m
+  cage tube diameter: 0.055 m
+
+COORDINATES AND WHEELS
+Meters. +Y forward, +X right, +Z up. Origin: centerline at ground level midway between axles. Neutral wheel spin axis: X.
+Wheel center positions [X, Y, Z]:
+  FL: [-0.795, 1.275, 0.36]
+  FR: [0.795, 1.275, 0.36]
+  RL: [-0.785, -1.275, 0.51]
+  RR: [0.785, -1.275, 0.51]
+FL/FR/RL/RR mean front-left/front-right/rear-left/rear-right as viewed from the driver's seat. In the left-side image the nose points left.
+
+DESIGN AND CONSISTENCY NOTES
+1. Silhouette priority: long pointed red nose, teal open frame, much larger rear wheels, single tall swept red fin, and a rear turbine.
+2. Use the original sharp futuristic nose. There is no hot-rod grille, front piston engine, number 07 or salvaged paneling.
+3. The single dorsal fin is on the centerline, above the rear engine. Its white graphic follows the sweep and is a decal or paint mask.
+4. Resolve the turbine consistently in 3D: use ONE longitudinal main housing with a rear-facing exhaust/rotor. Treat the visible blue circular side detail in the original image and side view as a separate lateral intake/generator cover. Do not rotate the main engine axis to match each illustration.
+5. The front, side, rear and top images are conceptual projections and differ in turbine details. The longitudinal engine plus lateral intake interpretation above takes precedence.
+6. Keep both white side graphics pointing toward the front. Preserve room for front wheel steering and rear tire travel below the side panels and turbine mounts.
+
+COLOR TARGETS
+Suggested sRGB base colors; lit pixels in the renders are not reliable color samples.
+  body_vermilion: #F12532
+  stripe_white: #F5F0E7
+  cage_teal: #0AB8B5
+  emission_blue: #00CFF5
+  rubber: #29292F
+  metal: #A7ABB2
+
+MATERIAL STARTING POINTS
+Paint: metallic 0, roughness 0.30. Painted tubes: metallic 0, roughness 0.36. Bare metal: metallic 1, roughness 0.32. Rubber: metallic 0, roughness 0.83. Seat fabric: metallic 0, roughness 0.90. These are starting values, to be tuned under the game's lighting. Use a separate emissive mask for glowing lights and boost parts.
+
+SEPARATE MODEL PARTS
+chassis, roll_cage, floor_pan, seat, harness, dashboard, steering_wheel, tire_FL, rim_FL, hub_FL, upright_FL, upper_arm_FL, lower_arm_FL, shock_body_FL, shock_rod_FL, spring_FL, tire_FR, rim_FR, hub_FR, upright_FR, upper_arm_FR, lower_arm_FR, shock_body_FR, shock_rod_FR, spring_FR, tire_RL, rim_RL, hub_RL, upright_RL, upper_arm_RL, lower_arm_RL, shock_body_RL, shock_rod_RL, spring_RL, tire_RR, rim_RR, hub_RR, upright_RR, upper_arm_RR, lower_arm_RR, shock_body_RR, shock_rod_RR, spring_RR, nose_shell, side_panel_L, side_panel_R, dorsal_fin, turbine_housing, turbine_rear_rotor, turbine_side_intake_L, turbine_side_intake_R, turbine_emissive, rear_nozzle
+
+ANIMATION AND ASSEMBLY
+- Root at the specified origin; bind chassis to vehicle body control.
+- Wheel pivots at axle centers. Keep tire and rim aligned; steering upright parents wheel spin on front corners.
+- Pivot suspension arms at inboard attachment points; use look-at/constraints or baked animation for shocks.
+- Keep steering wheel, springs, fan rotors and emissive boost meshes separate as applicable.
+- Leave fenders and cage on the chassis; test wheel clearance at full steering, bump and droop.
+- Export axes depend on the target engine; the coordinate convention here is the modeling master convention.
+
+MODELING ORDER
+1. Place four wheel cylinders using the positions and tire sizes above. Block out the floor, seat, nose, cage, and signature rear feature.
+2. Check silhouette from front, side, top and the game's chase camera. Fit the intended driver and steering controls.
+3. Resolve the approximate image views into one coherent 3D model, following the consistency notes. Do not expect all views to align as pixel-exact blueprints.
+4. Build separate panels, suspension, wheels, cockpit and propulsion parts. Mirror structural geometry; keep graphics independently oriented on each side.
+5. Add thickness to visible shells, cap tube ends, and use a simple enclosed undertray between chassis rails. Hidden underside plumbing is not prescribed.
+6. Add UVs, paint/graphic masks, roughness variation and emissive masks. Keep branding graphics sharp and bold.
+7. Test steering and suspension clearance. Set platform-specific mesh, texture, collision and LOD budgets once the game engine and camera distance are known.
+
+REFERENCE PRIORITY
+1. Original concept sheet for character, silhouette, colors and visible styling
+2. This written specification for proposed dimensions and explicit consistency resolutions
+3. Turnaround sheet for supplemental shape guidance; new hidden surfaces are design proposals
+

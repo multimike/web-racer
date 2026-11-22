@@ -1,0 +1,162 @@
+{
+  "name": "COMET FOX",
+  "slug": "comet-fox",
+  "version": "1.0",
+  "purpose": "Original-style 3D modeling concept handoff; not a finished 3D mesh or engineering drawing",
+  "scale_status": "All dimensions and colors are suggested art-direction targets, not measurements extracted from the generated image.",
+  "units": "meters",
+  "coordinates": {
+    "right": "+X",
+    "forward": "+Y",
+    "up": "+Z",
+    "origin": "Ground plane, midway between front and rear axles, on vehicle centerline",
+    "wheel_spin_axis": "X in neutral pose",
+    "front_steering_axis": "Z approximation; artist may add kingpin inclination"
+  },
+  "dimensions": {
+    "length": 3.7,
+    "width": 2.05,
+    "height": 1.87,
+    "wheelbase": 2.55,
+    "front_track": 1.59,
+    "rear_track": 1.57,
+    "front_tire_diameter": 0.72,
+    "rear_tire_diameter": 1.02,
+    "front_tire_width": 0.32,
+    "rear_tire_width": 0.48,
+    "front_overhang": 0.64,
+    "rear_overhang": 0.51,
+    "chassis_ground_clearance": 0.28,
+    "cage_tube_diameter": 0.055
+  },
+  "wheel_centers_m": {
+    "FL": [
+      -0.795,
+      1.275,
+      0.36
+    ],
+    "FR": [
+      0.795,
+      1.275,
+      0.36
+    ],
+    "RL": [
+      -0.785,
+      -1.275,
+      0.51
+    ],
+    "RR": [
+      0.785,
+      -1.275,
+      0.51
+    ]
+  },
+  "palette_srgb": {
+    "body_vermilion": "#F12532",
+    "stripe_white": "#F5F0E7",
+    "cage_teal": "#0AB8B5",
+    "emission_blue": "#00CFF5",
+    "rubber": "#29292F",
+    "metal": "#A7ABB2"
+  },
+  "separate_meshes": [
+    "chassis",
+    "roll_cage",
+    "floor_pan",
+    "seat",
+    "harness",
+    "dashboard",
+    "steering_wheel",
+    "tire_FL",
+    "rim_FL",
+    "hub_FL",
+    "upright_FL",
+    "upper_arm_FL",
+    "lower_arm_FL",
+    "shock_body_FL",
+    "shock_rod_FL",
+    "spring_FL",
+    "tire_FR",
+    "rim_FR",
+    "hub_FR",
+    "upright_FR",
+    "upper_arm_FR",
+    "lower_arm_FR",
+    "shock_body_FR",
+    "shock_rod_FR",
+    "spring_FR",
+    "tire_RL",
+    "rim_RL",
+    "hub_RL",
+    "upright_RL",
+    "upper_arm_RL",
+    "lower_arm_RL",
+    "shock_body_RL",
+    "shock_rod_RL",
+    "spring_RL",
+    "tire_RR",
+    "rim_RR",
+    "hub_RR",
+    "upright_RR",
+    "upper_arm_RR",
+    "lower_arm_RR",
+    "shock_body_RR",
+    "shock_rod_RR",
+    "spring_RR",
+    "nose_shell",
+    "side_panel_L",
+    "side_panel_R",
+    "dorsal_fin",
+    "turbine_housing",
+    "turbine_rear_rotor",
+    "turbine_side_intake_L",
+    "turbine_side_intake_R",
+    "turbine_emissive",
+    "rear_nozzle"
+  ],
+  "construction_notes": [
+    "Silhouette priority: long pointed red nose, teal open frame, much larger rear wheels, single tall swept red fin, and a rear turbine.",
+    "Use the original sharp futuristic nose. There is no hot-rod grille, front piston engine, number 07 or salvaged paneling.",
+    "The single dorsal fin is on the centerline, above the rear engine. Its white graphic follows the sweep and is a decal or paint mask.",
+    "Resolve the turbine consistently in 3D: use ONE longitudinal main housing with a rear-facing exhaust/rotor. Treat the visible blue circular side detail in the original image and side view as a separate lateral intake/generator cover. Do not rotate the main engine axis to match each illustration.",
+    "The front, side, rear and top images are conceptual projections and differ in turbine details. The longitudinal engine plus lateral intake interpretation above takes precedence.",
+    "Keep both white side graphics pointing toward the front. Preserve room for front wheel steering and rear tire travel below the side panels and turbine mounts."
+  ],
+  "source_precedence": [
+    "Original concept sheet for character, silhouette, colors and visible styling",
+    "This written specification for proposed dimensions and explicit consistency resolutions",
+    "Turnaround sheet for supplemental shape guidance; new hidden surfaces are design proposals"
+  ],
+  "material_starting_points": {
+    "paint": {
+      "metallic": 0,
+      "roughness": 0.3
+    },
+    "painted_tubes": {
+      "metallic": 0,
+      "roughness": 0.36
+    },
+    "bare_metal": {
+      "metallic": 1,
+      "roughness": 0.32
+    },
+    "rubber": {
+      "metallic": 0,
+      "roughness": 0.83
+    },
+    "seat_fabric": {
+      "metallic": 0,
+      "roughness": 0.9
+    },
+    "emissive": "Separate mask; tune intensity in the target engine. Palette hex values are sRGB, not linear shader values."
+  },
+  "rig_notes": [
+    "Root at the specified origin; bind chassis to vehicle body control.",
+    "Wheel pivots at axle centers. Keep tire and rim aligned; steering upright parents wheel spin on front corners.",
+    "Pivot suspension arms at inboard attachment points; use look-at/constraints or baked animation for shocks.",
+    "Keep steering wheel, springs, fan rotors and emissive boost meshes separate as applicable.",
+    "Leave fenders and cage on the chassis; test wheel clearance at full steering, bump and droop.",
+    "Export axes depend on the target engine; the coordinate convention here is the modeling master convention."
+  ]
+}
+

@@ -1,0 +1,83 @@
+{
+  "category": "VILLAGE LANDMARKS",
+  "assets": [
+    {
+      "id": "B09",
+      "slug": "water-tower",
+      "name": "Water Tower",
+      "category": "village-landmarks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 4,
+        "total_height_z": 8
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 5,
+        "depth": 5
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Coral cylindrical tank with teal conical cap on four timber supports.",
+      "roof_and_height": "Maintenance platform around Z=4.4 m; tank base 4.7 m; tank top 6.9 m; roof cap top 8.0 m. Tank diameter 3.4 m.",
+      "opening_schedule": "One rear access ladder, one right-side discharge pipe; no front ladder.",
+      "separate_parts": [
+        "four_legs",
+        "cross_braces",
+        "four_footings",
+        "platform",
+        "platform_rails",
+        "tank_shell",
+        "tank_bands",
+        "conical_roof",
+        "ladder",
+        "discharge_pipe"
+      ],
+      "construction_notes": "Exactly four main legs at corners of a 3.4 m square. Splay feet slightly outward within 4 m footprint. Keep braces behind the ladder. Add a maintenance platform gate where ladder meets it.",
+      "view_resolution": "The hero appears to show a front-side ladder while the REAR view shows rear access. Use one rear ladder only, following the written layout. Render scale is squat; use the proposed height if a tall landmark is desired.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    },
+    {
+      "id": "B10",
+      "slug": "village-hall",
+      "name": "Village Hall",
+      "category": "village-landmarks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 8,
+        "depth_y": 6,
+        "total_height_z": 7.5
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 9,
+        "depth": 8
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Mustard village hall with a teal roof and integrated clock tower.",
+      "roof_and_height": "Main gable ridge runs across X, eave about 3.4 m, ridge 4.8 m. Centered front tower rises to 7.5 m including pyramidal cap.",
+      "opening_schedule": "Front: central double door, one broad window per wing. Each side: two windows. Rear: service door centered and two flanking windows.",
+      "separate_parts": [
+        "hall_shell",
+        "plinth",
+        "gable_roof",
+        "tower_shell",
+        "tower_cap",
+        "clock_face",
+        "clock_hands",
+        "front_double_door",
+        "rear_door",
+        "windows",
+        "entrance_steps"
+      ],
+      "construction_notes": "Tower width 2.4 m and projection 0.8 m beyond main front wall. Main roof ridge runs left-to-right; tower joins it without floating gaps. Clock uses four marks and separate hands.",
+      "view_resolution": "Tower height relative to hall varies between views. Use the written 7.5 m top height and retain the main roof at 4.8 m. No need to add detailed clock mechanism.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    }
+  ]
+}
+

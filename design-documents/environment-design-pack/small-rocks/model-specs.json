@@ -1,0 +1,199 @@
+{
+  "category": "SMALL ROCKS",
+  "assets": [
+    {
+      "id": "S01",
+      "slug": "pebble",
+      "name": "Pebble",
+      "category": "small-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 0.3,
+        "depth_y": 0.24,
+        "height_z": 0.16
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Squashed irregular pebble.",
+      "features": "Five or six broad softly beveled planes.",
+      "separate_parts": [
+        "rock_body"
+      ],
+      "collision_recommendation": "Decorative, nonblocking by default.",
+      "animation_recommendation": "Static; optional physics only if game design requests it.",
+      "modeling_notes": "Keep an uneven footprint so repeated rotations do not look identical.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    },
+    {
+      "id": "S02",
+      "slug": "wedge",
+      "name": "Wedge",
+      "category": "small-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 0.55,
+        "depth_y": 0.35,
+        "height_z": 0.32
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Triangular stone with a single dominant ridge.",
+      "features": "A sloping top and broad flat underside.",
+      "separate_parts": [
+        "rock_body"
+      ],
+      "collision_recommendation": "Decorative, nonblocking by default.",
+      "animation_recommendation": "Static.",
+      "modeling_notes": "Keep the ridge off-center and clip the sharpest corner. Do not read as a manufactured ramp.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    },
+    {
+      "id": "S03",
+      "slug": "flat-slab",
+      "name": "Flat Slab",
+      "category": "small-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 0.9,
+        "depth_y": 0.6,
+        "height_z": 0.18
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Low oblong stone with a chipped corner.",
+      "features": "Wide upper plane and a shallow thick bevel.",
+      "separate_parts": [
+        "rock_body"
+      ],
+      "collision_recommendation": "Decorative, nonblocking by default; optional simple box-like proxy.",
+      "animation_recommendation": "Static.",
+      "modeling_notes": "Preserve the shallow profile when scaling. Use limited burial so the slab does not float on uneven terrain.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    },
+    {
+      "id": "S04",
+      "slug": "chip-cluster",
+      "name": "Chip Cluster",
+      "category": "small-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 0.75,
+        "depth_y": 0.65,
+        "height_z": 0.22
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Three separate small stones in a loose triangular cluster.",
+      "features": "Exactly three individually reusable stones with gaps.",
+      "separate_parts": [
+        "stone_A",
+        "stone_B",
+        "stone_C",
+        "optional_cluster_root"
+      ],
+      "collision_recommendation": "Decorative, nonblocking by default.",
+      "animation_recommendation": "Static.",
+      "modeling_notes": "Export the cluster and each stone separately if useful. Each stone gets its own contact pivot; the cluster root is at the group ground center.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    },
+    {
+      "id": "S05",
+      "slug": "broken-chunk",
+      "name": "Broken Chunk",
+      "category": "small-rocks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 0.65,
+        "depth_y": 0.5,
+        "height_z": 0.5
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Upright irregular rock with a broad fracture face.",
+      "features": "One main fracture plane and one shallow crack.",
+      "separate_parts": [
+        "rock_body"
+      ],
+      "collision_recommendation": "Nonblocking if scattered decoratively; simple convex proxy if used as a deliberate obstacle.",
+      "animation_recommendation": "Static.",
+      "modeling_notes": "Maintain the squat asymmetry and broad crack. Avoid automatically turning every scattered chunk into a wheel-catching collision obstacle.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.75,
+          1.25
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "stone"
+      ]
+    }
+  ]
+}
+

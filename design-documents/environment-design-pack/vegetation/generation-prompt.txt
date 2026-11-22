@@ -1,0 +1,16 @@
+Tool: built-in image_gen.
+Primary style reference: original buggy concept sheet.
+Additional reference: trees/design-sheet.png.
+
+Use case: stylized-concept. Asset type: production concept reference sheet for later 3D modeling of environment props for a colorful action-packed buggy racing videogame.
+The attached original buggy sheet is a STYLE REFERENCE ONLY. Match its polished stylized 3D rendering, bold readable silhouettes, exaggerated chunky shapes, saturated but controlled color, broad bevels and clean surfaces. Draw only the requested natural environment props, no vehicles. Organic materials are matte with simple broad tonal gradients, not glossy plastic or photorealistic leaf scans. The result should belong beside those original clean futuristic buggies.
+Plain near-white background, generous spacing, crisp large landscape reference sheet, every prop entirely in frame. Consistent neutral studio lighting, minimal soft contact shadow, no environment, no pedestals, no ground patches except the asset's own base. Show the same geometry consistently in all views for each prop. Orthographic views use parallel projection. Titles and short asset labels in clean dark typography, no paragraphs or dimension numbers. Clear medium-complexity forms readable at racing speed. No tiny noisy surface detail, no rust, no mechanical plant parts, no bioluminescence, no faces.
+The second attached image is a supporting reference for the approved tree foliage palette, chunky facets and matte natural materials. Match this environment art direction.
+Title: VEGETATION. Five evenly spaced columns of isolated props with a large three-quarter perspective in the upper row and an orthographic TOP view of that exact prop directly below. Exact short labels for each column: V01 PUFF BUSH; V02 RIBBON GRASS; V03 FAN FERN; V04 SPIKE ROSETTE; V05 CORAL BLOOMS. All plants shown large enough to inspect, equal visual display size, not shared world scale. Use bold sculpted leaves and moderate segmentation, simple chunky stylized 3D geometry, no twig or leaf noise.
+V01 PUFF BUSH: low asymmetric mound of five overlapping rounded faceted foliage masses, lime highlights and deep jade undersides; tiny warm brown stems visible at its base. Broad and inviting, about 1.3 m tall.
+V02 RIBBON GRASS: compact tuft of nine to twelve wide curved tapered grass blades with clear thickness and slight fold along the blade, bright yellow-green tips and deeper green roots. Asymmetric fan silhouette about 0.65 m tall; not dozens of hair-thin blades.
+V03 FAN FERN: rosette of six broad arcing fronds, each with five to seven pairs of chunky rounded leaflets, jade and mint green, visible central ribs. About 0.85 m tall.
+V04 SPIKE ROSETTE: seven to nine large thick fleshy lance-shaped leaves in a radial rosette, blue-green teal surface, lime edge highlight, modest blunt tips. About 0.75 m tall. No spines or flower stalk.
+V05 CORAL BLOOMS: compact clump with three large five-petal coral-pink flowers with warm yellow centers on short jade stems and several broad simple leaves. About 0.55 m tall. Sculptural petals, no delicate tiny stamens.
+Plain background, no pots, no dirt mounds, no rocks. Small palette swatches along bottom edge.
+

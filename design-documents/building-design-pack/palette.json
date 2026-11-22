@@ -1,0 +1,20 @@
+{
+  "color_space": "sRGB",
+  "status": "Proposed base colors, not sampled lighting",
+  "colors": {
+    "cream": "#F4E3C4",
+    "mustard": "#E5AB35",
+    "turquoise": "#1CAFAE",
+    "coral": "#F16B59",
+    "apricot": "#EBA17A",
+    "cobalt": "#3153BA",
+    "timber": "#AD6338",
+    "stone": "#8C88B8",
+    "stone_dark": "#655584",
+    "roof_metal": "#A7ADB9",
+    "glass": "#164C52",
+    "solar": "#233E83",
+    "cyan_light": "#44DDE8"
+  }
+}
+

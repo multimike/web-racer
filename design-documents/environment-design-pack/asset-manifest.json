@@ -1,0 +1,199 @@
+{
+  "version": "1.0",
+  "asset_count": 16,
+  "assets": [
+    {
+      "id": "T01",
+      "name": "Rally Oak",
+      "category": "trees",
+      "dimensions_m": {
+        "width_x": 4.8,
+        "depth_y": 4.5,
+        "height_z": 5.5
+      },
+      "brief": "trees/t01-rally-oak-brief.txt",
+      "sheet": "trees/design-sheet.png"
+    },
+    {
+      "id": "T02",
+      "name": "Switchback Pine",
+      "category": "trees",
+      "dimensions_m": {
+        "width_x": 3.3,
+        "depth_y": 3,
+        "height_z": 7
+      },
+      "brief": "trees/t02-switchback-pine-brief.txt",
+      "sheet": "trees/design-sheet.png"
+    },
+    {
+      "id": "T03",
+      "name": "Turbo Palm",
+      "category": "trees",
+      "dimensions_m": {
+        "width_x": 4.5,
+        "depth_y": 4.2,
+        "height_z": 6
+      },
+      "brief": "trees/t03-turbo-palm-brief.txt",
+      "sheet": "trees/design-sheet.png"
+    },
+    {
+      "id": "V01",
+      "name": "Puff Bush",
+      "category": "vegetation",
+      "dimensions_m": {
+        "width_x": 1.8,
+        "depth_y": 1.5,
+        "height_z": 1.3
+      },
+      "brief": "vegetation/v01-puff-bush-brief.txt",
+      "sheet": "vegetation/design-sheet.png"
+    },
+    {
+      "id": "V02",
+      "name": "Ribbon Grass",
+      "category": "vegetation",
+      "dimensions_m": {
+        "width_x": 0.85,
+        "depth_y": 0.75,
+        "height_z": 0.65
+      },
+      "brief": "vegetation/v02-ribbon-grass-brief.txt",
+      "sheet": "vegetation/design-sheet.png"
+    },
+    {
+      "id": "V03",
+      "name": "Fan Fern",
+      "category": "vegetation",
+      "dimensions_m": {
+        "width_x": 1.25,
+        "depth_y": 1.1,
+        "height_z": 0.85
+      },
+      "brief": "vegetation/v03-fan-fern-brief.txt",
+      "sheet": "vegetation/design-sheet.png"
+    },
+    {
+      "id": "V04",
+      "name": "Spike Rosette",
+      "category": "vegetation",
+      "dimensions_m": {
+        "width_x": 1.15,
+        "depth_y": 1.1,
+        "height_z": 0.75
+      },
+      "brief": "vegetation/v04-spike-rosette-brief.txt",
+      "sheet": "vegetation/design-sheet.png"
+    },
+    {
+      "id": "V05",
+      "name": "Coral Blooms",
+      "category": "vegetation",
+      "dimensions_m": {
+        "width_x": 0.8,
+        "depth_y": 0.65,
+        "height_z": 0.55
+      },
+      "brief": "vegetation/v05-coral-blooms-brief.txt",
+      "sheet": "vegetation/design-sheet.png"
+    },
+    {
+      "id": "R01",
+      "name": "Shoulder Boulder",
+      "category": "large-rocks",
+      "dimensions_m": {
+        "width_x": 3.2,
+        "depth_y": 2.6,
+        "height_z": 2.4
+      },
+      "brief": "large-rocks/r01-shoulder-boulder-brief.txt",
+      "sheet": "large-rocks/design-sheet.png"
+    },
+    {
+      "id": "R02",
+      "name": "Split Fin",
+      "category": "large-rocks",
+      "dimensions_m": {
+        "width_x": 2.3,
+        "depth_y": 1.5,
+        "height_z": 4.2
+      },
+      "brief": "large-rocks/r02-split-fin-brief.txt",
+      "sheet": "large-rocks/design-sheet.png"
+    },
+    {
+      "id": "R03",
+      "name": "Terrace Stack",
+      "category": "large-rocks",
+      "dimensions_m": {
+        "width_x": 4.2,
+        "depth_y": 3,
+        "height_z": 2.1
+      },
+      "brief": "large-rocks/r03-terrace-stack-brief.txt",
+      "sheet": "large-rocks/design-sheet.png"
+    },
+    {
+      "id": "S01",
+      "name": "Pebble",
+      "category": "small-rocks",
+      "dimensions_m": {
+        "width_x": 0.3,
+        "depth_y": 0.24,
+        "height_z": 0.16
+      },
+      "brief": "small-rocks/s01-pebble-brief.txt",
+      "sheet": "small-rocks/design-sheet.png"
+    },
+    {
+      "id": "S02",
+      "name": "Wedge",
+      "category": "small-rocks",
+      "dimensions_m": {
+        "width_x": 0.55,
+        "depth_y": 0.35,
+        "height_z": 0.32
+      },
+      "brief": "small-rocks/s02-wedge-brief.txt",
+      "sheet": "small-rocks/design-sheet.png"
+    },
+    {
+      "id": "S03",
+      "name": "Flat Slab",
+      "category": "small-rocks",
+      "dimensions_m": {
+        "width_x": 0.9,
+        "depth_y": 0.6,
+        "height_z": 0.18
+      },
+      "brief": "small-rocks/s03-flat-slab-brief.txt",
+      "sheet": "small-rocks/design-sheet.png"
+    },
+    {
+      "id": "S04",
+      "name": "Chip Cluster",
+      "category": "small-rocks",
+      "dimensions_m": {
+        "width_x": 0.75,
+        "depth_y": 0.65,
+        "height_z": 0.22
+      },
+      "brief": "small-rocks/s04-chip-cluster-brief.txt",
+      "sheet": "small-rocks/design-sheet.png"
+    },
+    {
+      "id": "S05",
+      "name": "Broken Chunk",
+      "category": "small-rocks",
+      "dimensions_m": {
+        "width_x": 0.65,
+        "depth_y": 0.5,
+        "height_z": 0.5
+      },
+      "brief": "small-rocks/s05-broken-chunk-brief.txt",
+      "sheet": "small-rocks/design-sheet.png"
+    }
+  ]
+}
+

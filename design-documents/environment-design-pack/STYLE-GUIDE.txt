@@ -1,0 +1,42 @@
+ENVIRONMENT STYLE GUIDE — MATCHING THE ORIGINAL BUGGIES
+
+ART DIRECTION
+Polished stylized 3D shapes, bold silhouettes, saturated foliage, warm bark and soft lavender/slate stone. Use medium-size facets and broad bevels rather than realistic scans or dense surface noise. Natural materials remain matte; bright color does not imply glowing or plastic surfaces.
+These designs complement the original clean buggies. No wasteland styling is included.
+
+SHARED SHAPE LANGUAGE
+Trees: a few large foliage volumes with readable trunk structure.
+Low plants: broad leaf blades and clear radial or fan arrangements.
+Rocks: unequal large planes, clipped corners and one or two intentional features.
+Use geometry for important silhouette changes. Reserve micro-detail for optional texture work.
+
+COLOR AND LIGHT
+palette.json gives suggested sRGB base colors. Foliage: jade, lime and teal. Bark: cinnamon. Flowers: coral and yellow. Stone: lavender/slate sides and warm upper planes.
+Warm upper stone faces are an artistic material region, not a baked directional highlight. Avoid baked shadows that conflict with game lighting when assets rotate.
+Use shared materials or a palette atlas where appropriate. Leaves may use a subtle underside tint. No emission is needed.
+
+SCALE
+All dimensions are proposed above-ground bounding boxes in meters. The sheets display different props at convenient viewing sizes, NOT one common world scale.
+The buggies are about 3.25–3.70 m long and 1.95–2.25 m wide. Trees are 5.5–7 m tall; low plants 0.55–1.3 m tall. Large rocks are deliberate track landmarks; smaller stones are scatter.
+Keep the original-scale master mesh. Use restrained uniform variations; excessive stretching damages the designed silhouettes.
+
+MODEL STRUCTURE
+Set +Z up, meters, pivot at the ground contact center. For these prop sheets front means looking toward +Y. This differs from the buggy master forward direction and is only a reference-view convention.
+Close unseen surfaces where a jump camera could reveal them. Put a small skirt below Z=0 when needed for ground placement; avoid visible terrain disks.
+Pin wind weights at root/crown attachments. Simple low-frequency plant motion should preserve the silhouette.
+Do not turn every small leaf, pebble and root into collision geometry. Use deliberate collision appropriate to gameplay.
+
+OPTIMIZATION
+No triangle, texture or LOD budgets are fixed because the target platform and camera are unspecified. Build readable close and middle silhouettes first.
+At distance, simplify tree canopy masses and plant leaves while preserving the outline. Consider tree impostors or vegetation cards only after testing their look against this chunky style.
+Share stone and foliage materials; use instancing for repeated props. Remove tiny cracks or flower detail at distance before removing major shapes.
+
+REFERENCE LIMITS AND RESOLUTIONS
+Images were generated as design references. Some labeled views retain perspective and are not exact projections. Rear views are not separately drawn. Use the main perspective and the written dimensions as art-direction guides; resolve consistency during blockout.
+Trees: preserve the major branch layout, not every illustrated small lobe.
+Fern: the lower view remains elevated; establish a coherent radial top layout in 3D.
+Flowers: use six petals to match the delivered main image; the original generation prompt requested five.
+Split Fin: notch descends from the top into a connected base.
+Chip Cluster: three separate stones; no fused terrain base.
+These resolutions take precedence over conflicting incidental image or prompt details.
+

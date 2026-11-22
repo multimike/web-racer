@@ -1,0 +1,161 @@
+{
+  "name": "NEON WASP",
+  "slug": "neon-wasp",
+  "version": "1.0",
+  "purpose": "Original-style 3D modeling concept handoff; not a finished 3D mesh or engineering drawing",
+  "scale_status": "All dimensions and colors are suggested art-direction targets, not measurements extracted from the generated image.",
+  "units": "meters",
+  "coordinates": {
+    "right": "+X",
+    "forward": "+Y",
+    "up": "+Z",
+    "origin": "Ground plane, midway between front and rear axles, on vehicle centerline",
+    "wheel_spin_axis": "X in neutral pose",
+    "front_steering_axis": "Z approximation; artist may add kingpin inclination"
+  },
+  "dimensions": {
+    "length": 3.25,
+    "width": 1.95,
+    "height": 1.72,
+    "wheelbase": 2.2,
+    "front_track": 1.61,
+    "rear_track": 1.55,
+    "front_tire_diameter": 0.74,
+    "rear_tire_diameter": 0.82,
+    "front_tire_width": 0.34,
+    "rear_tire_width": 0.4,
+    "front_overhang": 0.64,
+    "rear_overhang": 0.41,
+    "chassis_ground_clearance": 0.3,
+    "cage_tube_diameter": 0.055
+  },
+  "wheel_centers_m": {
+    "FL": [
+      -0.805,
+      1.1,
+      0.37
+    ],
+    "FR": [
+      0.805,
+      1.1,
+      0.37
+    ],
+    "RL": [
+      -0.775,
+      -1.1,
+      0.41
+    ],
+    "RR": [
+      0.775,
+      -1.1,
+      0.41
+    ]
+  },
+  "palette_srgb": {
+    "body_yellow": "#E9EF00",
+    "cage_violet": "#8624C8",
+    "accent_cyan": "#00D7E8",
+    "rubber": "#29292F",
+    "metal": "#A7ABB2"
+  },
+  "separate_meshes": [
+    "chassis",
+    "roll_cage",
+    "floor_pan",
+    "seat",
+    "harness",
+    "dashboard",
+    "steering_wheel",
+    "tire_FL",
+    "rim_FL",
+    "hub_FL",
+    "upright_FL",
+    "upper_arm_FL",
+    "lower_arm_FL",
+    "shock_body_FL",
+    "shock_rod_FL",
+    "spring_FL",
+    "tire_FR",
+    "rim_FR",
+    "hub_FR",
+    "upright_FR",
+    "upper_arm_FR",
+    "lower_arm_FR",
+    "shock_body_FR",
+    "shock_rod_FR",
+    "spring_FR",
+    "tire_RL",
+    "rim_RL",
+    "hub_RL",
+    "upright_RL",
+    "upper_arm_RL",
+    "lower_arm_RL",
+    "shock_body_RL",
+    "shock_rod_RL",
+    "spring_RL",
+    "tire_RR",
+    "rim_RR",
+    "hub_RR",
+    "upright_RR",
+    "upper_arm_RR",
+    "lower_arm_RR",
+    "shock_body_RR",
+    "shock_rod_RR",
+    "spring_RR",
+    "nose_shell",
+    "side_panel_L",
+    "side_panel_R",
+    "rear_fin_L",
+    "rear_fin_R",
+    "booster_housing_L",
+    "booster_housing_R",
+    "booster_emissive_L",
+    "booster_emissive_R",
+    "roof_light"
+  ],
+  "construction_notes": [
+    "Silhouette priority: a narrow pointed yellow nose, lots of open space between the chassis and wheels, purple cage, and TWO separated yellow rear fins.",
+    "Keep the nose, side panels and fins as thin shells with finished undersides; do not fill the open chassis into a solid body.",
+    "Use a central rear motor/battery enclosure low behind the seat. Mount two compact boosters above it, parallel to the forward axis, with their nozzles facing backward.",
+    "Rear fin attachments and underside structure are new proposed details. Keep the fins paired and mirrored; do not reinterpret them as one central spoiler.",
+    "Use cyan rim bands and suspension springs, violet tube frame and yellow panel masses. Purple fin stripes are decals.",
+    "The image views are approximate: match front and rear axle positions to the written wheelbase; normalize fin height, booster spacing and cage width in the first blockout."
+  ],
+  "source_precedence": [
+    "Original concept sheet for character, silhouette, colors and visible styling",
+    "This written specification for proposed dimensions and explicit consistency resolutions",
+    "Turnaround sheet for supplemental shape guidance; new hidden surfaces are design proposals"
+  ],
+  "material_starting_points": {
+    "paint": {
+      "metallic": 0,
+      "roughness": 0.3
+    },
+    "painted_tubes": {
+      "metallic": 0,
+      "roughness": 0.36
+    },
+    "bare_metal": {
+      "metallic": 1,
+      "roughness": 0.32
+    },
+    "rubber": {
+      "metallic": 0,
+      "roughness": 0.83
+    },
+    "seat_fabric": {
+      "metallic": 0,
+      "roughness": 0.9
+    },
+    "emissive": "Separate mask; tune intensity in the target engine. Palette hex values are sRGB, not linear shader values."
+  },
+  "rig_notes": [
+    "Root at the specified origin; bind chassis to vehicle body control.",
+    "Wheel pivots at axle centers. Keep tire and rim aligned; steering upright parents wheel spin on front corners.",
+    "Pivot suspension arms at inboard attachment points; use look-at/constraints or baked animation for shocks.",
+    "Keep steering wheel, springs, fan rotors and emissive boost meshes separate as applicable.",
+    "Leave fenders and cage on the chassis; test wheel clearance at full steering, bump and droop.",
+    "Export axes depend on the target engine; the coordinate convention here is the modeling master convention."
+  ]
+}
+

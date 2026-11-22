@@ -1,0 +1,128 @@
+{
+  "category": "TREES",
+  "assets": [
+    {
+      "id": "T01",
+      "slug": "rally-oak",
+      "name": "Rally Oak",
+      "category": "trees",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 4.8,
+        "depth_y": 4.5,
+        "height_z": 5.5
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "A broad umbrella canopy over a stout, gently leaning trunk.",
+      "features": "Three structural branches; five to seven canopy masses; broad root flare.",
+      "separate_parts": [
+        "trunk_and_roots",
+        "primary_branches",
+        "canopy_01..07"
+      ],
+      "collision_recommendation": "Simple trunk capsule or tapered convex proxy; canopy generally nonblocking.",
+      "animation_recommendation": "Pin trunk base; allow modest branch-tip and canopy sway.",
+      "modeling_notes": "Keep limb junctions readable. Do not model every leaf; use irregular rounded clusters with broad facets. Match crown volume rather than exact leaf-cluster count between views.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.85,
+          1.15
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "foliage",
+        "bark"
+      ]
+    },
+    {
+      "id": "T02",
+      "slug": "switchback-pine",
+      "name": "Switchback Pine",
+      "category": "trees",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 3.3,
+        "depth_y": 3,
+        "height_z": 7
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "Tall, tapered and gently windswept.",
+      "features": "Four staggered canopy tiers around a narrow visible trunk.",
+      "separate_parts": [
+        "trunk_and_roots",
+        "canopy_tier_01..04"
+      ],
+      "collision_recommendation": "Simple trunk capsule; omit fine foliage collision.",
+      "animation_recommendation": "Pin trunk base; sway upper tiers progressively more.",
+      "modeling_notes": "Avoid a mathematically perfect cone. Make each tier asymmetric, with chunky edges. Preserve the four-tier silhouette when reducing detail.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.85,
+          1.15
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "foliage",
+        "bark"
+      ]
+    },
+    {
+      "id": "T03",
+      "slug": "turbo-palm",
+      "name": "Turbo Palm",
+      "category": "trees",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "dimensions_m": {
+        "width_x": 4.5,
+        "depth_y": 4.2,
+        "height_z": 6
+      },
+      "scale_status": "Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.",
+      "silhouette": "A curved segmented trunk and a broad radial crown.",
+      "features": "Eight to ten substantial fronds; no fruit.",
+      "separate_parts": [
+        "trunk_and_roots",
+        "crown_core",
+        "frond_01..10"
+      ],
+      "collision_recommendation": "Two or three simple capsules following trunk curve; fronds nonblocking.",
+      "animation_recommendation": "Keep crown attachments fixed; bend fronds along their length.",
+      "modeling_notes": "Use a few broad notches per frond. Model frond thickness at close range. Keep consistent lean direction between front and side views.",
+      "pivot": "At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.",
+      "coordinates": "+X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.",
+      "variation": {
+        "uniform_scale_range": [
+          0.85,
+          1.15
+        ],
+        "yaw_degrees": [
+          0,
+          360
+        ],
+        "note": "These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility."
+      },
+      "palette_groups": [
+        "foliage",
+        "bark"
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,118 @@
+{
+  "category": "SHACKS",
+  "assets": [
+    {
+      "id": "B01",
+      "slug": "sunshack",
+      "name": "Sunshack",
+      "category": "shacks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 3,
+        "total_height_z": 3.3
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 4.8,
+        "depth": 4.6
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Porch shack with mustard timber, coral gable roof and teal openings.",
+      "roof_and_height": "Gable ridge runs front to rear (+Y); front eave 2.5 m, ridge 3.3 m.",
+      "opening_schedule": "Front: teal door left, one window right. Right side: one window. Rear: one centered window. Left side: plain.",
+      "separate_parts": [
+        "wall_shell",
+        "stone_plinth",
+        "gable_roof",
+        "fascia",
+        "porch_deck",
+        "porch_posts_pair",
+        "door",
+        "window_modules"
+      ],
+      "construction_notes": "Porch projects 0.8 m from front; two posts and one shallow step. Keep roof supports chunky. Broad plank seams are enough; no warped or rotten boards.",
+      "view_resolution": "The hero front and rear roof shapes agree. Preserve the front door/window arrangement when making palette variants.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    },
+    {
+      "id": "B02",
+      "slug": "workshop-shed",
+      "name": "Workshop Shed",
+      "category": "shacks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 3.5,
+        "total_height_z": 3.3
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 4.8,
+        "depth": 4.2
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Turquoise utility shed, mustard double doors, cobalt mono-pitch roof.",
+      "roof_and_height": "One planar roof: high along the left wall at 3.3 m, low along the right wall at 2.8 m; slope is across X only.",
+      "opening_schedule": "Front: centered double doors. Right side: one high window. Rear: one small vent. Left side: plain.",
+      "separate_parts": [
+        "wall_shell",
+        "stone_plinth",
+        "mono_pitch_roof",
+        "fascia",
+        "doors_pair",
+        "side_window",
+        "rear_vent",
+        "exterior_lamp",
+        "solar_panel"
+      ],
+      "construction_notes": "Double door opening 1.8 m wide by 2.2 m high. Treat this as pedestrian/storage access, not a buggy garage. Keep the roof panel flush.",
+      "view_resolution": "The sheet's side and rear views disagree about roof slope. Use the single X-sloping plane specified here; do not slope the roof in both directions.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    },
+    {
+      "id": "B03",
+      "slug": "stilt-hut",
+      "name": "Stilt Hut",
+      "category": "shacks",
+      "version": "1.0",
+      "reference_image": "design-sheet.png",
+      "main_body_dimensions_m": {
+        "width_x": 4,
+        "depth_y": 4,
+        "total_height_z": 4.6
+      },
+      "minimum_art_placement_envelope_m": {
+        "width": 4.8,
+        "depth": 6.8
+      },
+      "scale_status": "Proposed game-art dimensions, not measured CAD. Main body width/depth exclude attached stairs, balconies and eaves; total height includes roof/tower. Placement envelope is a blockout allowance for attachments, not a gameplay clearance or building code.",
+      "silhouette": "Cream raised timber hut with teal hip roof, coral door and a veranda.",
+      "roof_and_height": "Hipped roof over square body; floor 0.9 m, eave 3.5 m, roof top 4.6 m.",
+      "opening_schedule": "Front: centered door and two windows, one on each side. Side: one window per side. Rear: one centered window.",
+      "separate_parts": [
+        "wall_shell",
+        "raised_floor",
+        "hip_roof",
+        "six_stilts",
+        "cross_braces",
+        "footings",
+        "veranda",
+        "stairs",
+        "rail_modules",
+        "door",
+        "windows"
+      ],
+      "construction_notes": "Six structural stilts in a 3-by-2 plan: three columns along X at -1.7, 0, +1.7 m, and two rows along Y at 0.3 and 3.7 m. Porch can use additional local braces. Separate staircase and rail modules.",
+      "view_resolution": "Support counts and stair perspective vary in the sheet. Six main stilts are authoritative; keep all front-view windows. Stair rises 0.9 m and projects approximately 1.6 m.",
+      "pivot": "At ground level, horizontally centered on the FRONT main-wall baseline. Main body occupies X=-width/2..+width/2 and Y=0..depth; front attachments extend into negative Y.",
+      "coordinates": "Meters, +X right in front view, +Y into building from front facade, +Z up.",
+      "variant_rules": "Keep openings and overall scale consistent. Swap predefined paint regions, shutters, roof accents and optional lamps. Mirror only when balcony/stair access and roof attachments are also resolved."
+    }
+  ]
+}
+

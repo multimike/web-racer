@@ -1,0 +1,33 @@
+VILLAGE ASSEMBLY GUIDE
+
+STARTER VILLAGE
+Use B10 Village Hall at a central plaza, B08 Market Hall beside it, and B04–B06 houses around the outer edges.
+Place B07 Race Garage near the course entrance with an open vehicle apron.
+Use B01–B03 shacks on the village fringe, by a coastal path, or near service areas.
+Place B09 Water Tower behind the rooftops as a navigation landmark.
+
+SUGGESTED FIRST BLOCKOUT
+A 60 × 60 m area is enough for a small initial composition; expand once racing speed and camera are known.
+Start with 6–9 houses using two or three palette variants, 3–5 shacks, one garage, one market, one village hall and one water tower.
+Try a central plaza about 18 × 18 m, with an 8–10 m clear racing street around or through it. These are game-design starting values, not tested track dimensions.
+Reserve an apron at least 10 m wide × 6 m deep outside the garage; test turning with the actual buggy controller.
+Avoid placing external stairs, stilt supports, awnings or balcony columns inside the drivable corridor.
+Keep the inside of fast corners visually open. Taller landmarks help orientation without needing roadside clutter.
+
+ENVIRONMENT CONNECTIONS
+Use existing broadleaf trees in small courtyard groups; keep trunks outside the driving line.
+Palms work well at the village edge near stilt huts. Pines suit the uphill approach.
+Use bushes and flowers beside entrances, broad grass in quieter edges, and small rocks as nonblocking scatter.
+Large boulders can define the outskirts. Do not hide hard obstacles behind foliage.
+
+REPETITION WITHOUT UNIFORMITY
+Vary paint regions before stretching geometry.
+Rotate entire houses, swap shutter types, change optional lamps, and selectively add solar panels.
+Mix the three house massings to avoid identical rooflines. Use taller Corner Houses sparingly near street corners.
+Do not mirror a model without also moving its stairs, balcony access, chimney and door hinges consistently.
+
+READABILITY AND MODELING SCOPE
+Check the scene from a low chase camera and during jumps.
+The sheets provide exterior concepts. They do not include an implemented level, furnished interiors, finished meshes or engine prefabs.
+Keep the first village blockout simple; finalize scale, collision and camera clearances before detailed UVs and trim work.
+

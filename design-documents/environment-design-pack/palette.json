@@ -1,0 +1,34 @@
+{
+  "color_space": "sRGB",
+  "status": "Proposed base-color targets; not sampled lighting values",
+  "groups": {
+    "foliage": {
+      "jade": "#139B68",
+      "deep_teal": "#116957",
+      "lime": "#9BD916",
+      "highlight": "#C7F039"
+    },
+    "bark": {
+      "base": "#B86132",
+      "shadow": "#87452B",
+      "highlight": "#E8994A"
+    },
+    "succulent": {
+      "base": "#169F8E",
+      "shadow": "#126A60",
+      "edge": "#C3DF38"
+    },
+    "flowers": {
+      "petal": "#F56C72",
+      "center": "#FFD141",
+      "stem": "#399E3E"
+    },
+    "stone": {
+      "base": "#8C88B8",
+      "shadow": "#655584",
+      "mid_slate": "#777CAE",
+      "upper_face": "#F0CDB1"
+    }
+  }
+}
+

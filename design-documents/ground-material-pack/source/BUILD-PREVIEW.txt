@@ -1,0 +1,5 @@
+The included preview.bundle.js was bundled from preview.js with the project's installed Babylon.js and Rolldown.
+To rebuild in a Node project that has @babylonjs/core and rolldown available, resolve the Babylon package from that project and bundle source/preview.js as a browser IIFE, with dynamic imports inlined and minification enabled.
+The bundle is only for the standalone preview; the game should use its existing Babylon.js dependency.
+The original texture data is generated independently by generate_materials.py.
+

@@ -1,0 +1,54 @@
+V04 — SPIKE ROSETTE — MODELING BRIEF v1.0
+
+REFERENCE
+Use the matching labeled column of design-sheet.png and the shared STYLE-GUIDE.txt.
+These are stylized concept references, not finished meshes or exact orthographic blueprints.
+
+PROPOSED SIZE
+Width X: 1.15 m
+Depth Y: 1.1 m
+Height Z: 0.75 m
+Suggested art-direction bounds, not measurements of the image. All are visible dimensions above nominal ground; any buried skirt is extra.
+
+SILHOUETTE
+A dense blue-green succulent rosette.
+Seven to nine thick pointed leaves with blunt ends.
+
+CONSTRUCTION
+Separate parts: leaf_01..09, central_core.
+Avoid needle-sharp tips. Use thick convex leaves and a clear central fold. Lime edge color is paint/material color, not emission.
+Unseen backs and undersides are artist-designed continuations. Do not leave holes visible from a low chase camera or during jumps.
+
+PIVOT AND COORDINATES
+At ground contact center, Z=0; root flare/rocks may extend a small skirt below ground.
++X right, +Y rearward from the front reference, +Z up; meters. Export conversion is engine-specific.
+Front means looking toward +Y; this is an environment-prop convention, not the buggy's driving direction.
+
+MATERIALS
+Use palette groups: succulent.
+Suggested sRGB colors:
+  succulent.base: #169F8E
+  succulent.shadow: #126A60
+  succulent.edge: #C3DF38
+All organic and stone materials: metallic 0, emission 0. Suggested roughness: foliage 0.65–0.80, bark 0.80–0.90, stone 0.80–0.95, petals 0.55–0.70.
+Use broad color variation and restrained occlusion. Do not bake the sheet's studio highlights or shadows into albedo.
+
+COLLISION
+Nonblocking by default.
+
+WIND / MOTION
+Very little wind motion; leaves should feel heavier than grass.
+
+VARIATION
+Suggested uniform scale range: 0.75–1.25x.
+Yaw: 0–360 degrees when placement allows.
+These are suggested placement ranges. Keep silhouette proportions; do not freely randomize nonuniform scale. Check tree lean, rock notch direction, and camera visibility.
+Keep original-sized master geometry before making variants.
+
+MODELING CHECKS
+1. Block out the bounding box and silhouette; compare with the 3.25–3.70 m long buggy concepts.
+2. Resolve differences between the illustrative views into one coherent mesh.
+3. Add broad facets, rounded bevels, thickness and a plausible backside.
+4. Use shared material palettes. Set UV density and mesh budgets after platform and camera distance are known.
+5. Check the chase-camera silhouette, ground contact, collision and any wind deformation in the actual game.
+
