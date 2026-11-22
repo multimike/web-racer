@@ -4,13 +4,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Racer</title>
+    <link rel="icon" href="data:," />
     <style>
-      html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #0a0a0f; }
-      #renderCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
+      html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #9cc6e8; }
+      #renderCanvas { width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+      #status, #result { display: none; }
+      #status[data-error] { display: block; position: fixed; left: 10px; top: 10px; right: 10px; z-index: 30; margin: 0; padding: 8px;
+        color: #fff; background: rgba(120, 0, 0, 0.85); font: 13px ui-monospace, Menlo, monospace; white-space: pre-wrap; }
     </style>
+    <!-- Loading panel CSS: the same as src/ui/LoadingScreen.ts (which adopts #wr-loading). -->
+    <style id="wr-loading-style">
+.wr-loading {
+  position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, #a9d3f0 0%, #7fb4dc 60%, #5f97c4 100%);
+  font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #10202c;
+  transition: opacity 0.35s ease;
+}
+.wr-loading.wr-out { opacity: 0; pointer-events: none; }
+.wr-loading-panel {
+  width: min(420px, 80vw); padding: 22px 26px 20px; border-radius: 14px;
+  background: rgba(20, 30, 39, 0.82); color: #eef6fa; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+.wr-loading-title { font: italic 800 22px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; letter-spacing: 0.04em; margin-bottom: 14px; }
+.wr-loading-track { height: 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.wr-loading-fill { height: 100%; width: 0%; background: #14e8f6; border-radius: 5px; transition: width 0.15s linear; }
+.wr-loading-label { margin-top: 10px; font-weight: 500; font-size: 13px; opacity: 0.8; min-height: 1.2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-loading-error { margin-top: 10px; font: 12px ui-monospace, Menlo, monospace; color: #ffb4a8; white-space: pre-wrap; max-height: 50vh; overflow: auto; }
+</style>
   </head>
   <body>
     <canvas id="renderCanvas"></canvas>
+    <!-- Shown from the first paint, while the script downloads; src/ui/LoadingScreen.ts takes it over. -->
+    <div id="wr-loading" class="wr-loading">
+      <div class="wr-loading-panel">
+        <div class="wr-loading-title">WEB RACER</div>
+        <div class="wr-loading-track"><div class="wr-loading-fill"></div></div>
+        <div class="wr-loading-label">loading…</div>
+      </div>
+    </div>
+    <div id="status" hidden></div>
+    <pre id="result" hidden></pre>
+    <!-- Vite drops an onerror attribute from the module tag: a failed script load (e.g. 404s under a wrong base path) is caught here instead. -->
+    <script>addEventListener('error', (e) => { if (e.target instanceof HTMLScriptElement) document.querySelector('.wr-loading-label').textContent = 'could not load the game script'; }, true);</script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

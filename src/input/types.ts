@@ -15,4 +15,6 @@ export interface InputProvider {
   /** Whether this provider currently has a live device to read from. */
   isActive(): boolean;
   poll(): CarIntent;
+  /** Optional: remove event listeners (keyboard). */
+  dispose?(): void;
 }

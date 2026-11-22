@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Blender backups
+*.blend1
+
+# The owner's 148 MB ground material pack: reference only (the game generates
+# its ground textures in code). Its generator script and notes are kept.
+design-documents/ground-material-pack/*
+!design-documents/ground-material-pack/source/
+!design-documents/ground-material-pack/README.txt
+!design-documents/ground-material-pack/manifest.json
+
+# Per-machine Claude settings
+.claude/settings.local.json

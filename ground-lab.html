@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ground Lab — web-racer</title>
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #cfe5f5; }
+  body.grid { background: #1d2530; }
+  canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  #grid { display: none; }
+  body.grid #grid { display: block; }
+  body.grid #lab { display: none; }
+  /* Shown in screenshots on purpose: headless review has no console. */
+  #debug {
+    position: fixed; left: 10px; top: 10px; max-width: 86ch; margin: 0;
+    padding: 8px 10px; border-radius: 4px; white-space: pre-wrap;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #10202c; background: rgba(255, 255, 255, 0.8);
+  }
+  body.grid #debug { left: auto; right: 10px; top: auto; bottom: 10px; }
+  #debug:empty { display: none; }
+  #debug .err { color: #b3261e; font-weight: 700; }
+  body.noui #debug { display: none; }
+  body.noui #debug.haserr { display: block; }
+</style>
+</head>
+<body>
+<canvas id="lab"></canvas>
+<canvas id="grid"></canvas>
+<pre id="debug"></pre>
+<script type="module" src="/src/lab/groundLab.ts"></script>
+</body>
+</html>

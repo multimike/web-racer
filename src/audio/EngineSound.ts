@@ -36,19 +36,53 @@ export class EngineSound {
   private layers: LayerNodes[] = [];
   private throttle = 0;
   private rpm = 0;
+  private unlock: (() => void) | null = null;
+  private onVisibility: (() => void) | null = null;
+  private resuming = false;
 
   /**
-   * Browsers only allow audio to start from a user gesture, so arm one-shot
-   * listeners; the graph is built on the first click or key press.
+   * Browsers only allow audio to start from a user gesture, so arm
+   * listeners; the graph is built on the first click or key press. The
+   * listeners stay until the context actually runs (a resume that did not
+   * take is tried again at the next gesture). `update()` also starts / resumes
+   * the context once the page has had user activation by any means
+   * (`navigator.userActivation.hasBeenActive`) — whether a gamepad press
+   * counts as activation is the browser's call.
    */
   attachUnlock(): void {
     const unlock = () => {
-      window.removeEventListener('pointerdown', unlock);
-      window.removeEventListener('keydown', unlock);
       this.start();
+      this.resume(true);
+      if (this.ctx?.state === 'running') this.dropUnlock();
     };
+    this.unlock = unlock;
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
+  }
+
+  private dropUnlock(): void {
+    if (!this.unlock) return;
+    window.removeEventListener('pointerdown', this.unlock);
+    window.removeEventListener('keydown', this.unlock);
+    this.unlock = null;
+  }
+
+  /** resume() with its rejection handled (a context closed by dispose()
+   * before the unlock rejects the pending promise). A gesture always calls
+   * it; the per-frame retry waits for the previous attempt to settle. */
+  private resume(fromGesture = false): void {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'suspended' || (this.resuming && !fromGesture)) return;
+    this.resuming = true;
+    ctx.resume().then(
+      () => {
+        this.resuming = false;
+        if (ctx.state === 'running') this.dropUnlock();
+      },
+      () => {
+        this.resuming = false;
+      },
+    );
   }
 
   private start(): void {
@@ -74,12 +108,13 @@ export class EngineSound {
 
     // Babylon's render loop (and with it our parameter updates) pauses in a
     // hidden tab while oscillators would keep droning — mute with the tab.
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') void ctx.suspend();
-      else void ctx.resume();
-    });
+    this.onVisibility = () => {
+      if (document.visibilityState === 'hidden') ctx.suspend().catch(() => {});
+      else this.resume();
+    };
+    document.addEventListener('visibilitychange', this.onVisibility);
 
-    void ctx.resume();
+    this.resume();
     this.apply();
   }
 
@@ -87,7 +122,26 @@ export class EngineSound {
   update(throttle: number, rpm: number): void {
     this.throttle = throttle;
     this.rpm = rpm;
+    // No click or key yet (a gamepad-only session): start as soon as the
+    // browser says the page has been activated, and keep retrying a resume
+    // that has not taken while the page is visible.
+    if (this.unlock && typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
+      this.start();
+      if (document.visibilityState === 'visible') this.resume();
+    }
     this.apply();
+  }
+
+  /** Stop the sound and drop every listener. */
+  dispose(): void {
+    this.dropUnlock();
+    if (this.onVisibility) document.removeEventListener('visibilitychange', this.onVisibility);
+    this.onVisibility = null;
+    for (const { osc } of this.layers) osc.stop();
+    this.layers = [];
+    this.ctx?.close().catch(() => {});
+    this.ctx = null;
+    this.master = null;
   }
 
   private apply(): void {

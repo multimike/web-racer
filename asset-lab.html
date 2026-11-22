@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Asset Lab — web-racer</title>
+<style>
+  :root {
+    --paper: #cfe0f7;
+    --grid: #b3cdec;
+    --grid-strong: #9ab9e2;
+    --ink: #17324f;
+    --ink-dim: #4a6b8f;
+    --line: #2b5680;
+    --ok: #0f7a3d;
+    --off: #b23a2f;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background:
+      repeating-linear-gradient(0deg, transparent 0 9px, var(--grid) 9px 10px),
+      repeating-linear-gradient(90deg, transparent 0 9px, var(--grid) 9px 10px),
+      repeating-linear-gradient(0deg, transparent 0 49px, var(--grid-strong) 49px 50px),
+      repeating-linear-gradient(90deg, transparent 0 49px, var(--grid-strong) 49px 50px),
+      var(--paper);
+    color: var(--ink);
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+    overflow: hidden;
+  }
+  .frame {
+    border: 2px solid var(--line);
+    background: rgba(207, 224, 247, 0.55);
+    border-radius: 2px;
+  }
+  header {
+    padding: 7px 12px;
+    display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap;
+  }
+  h1 { font-size: 15px; margin: 0 6px 0 0; letter-spacing: 0.02em; text-transform: uppercase; }
+  label.ctl { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-dim); white-space: nowrap; }
+  select, input[type=number] {
+    font: inherit; color: var(--ink); background: rgba(255,255,255,0.6);
+    border: 1px solid var(--line); border-radius: 2px; padding: 2px 5px;
+  }
+  input[type=number] { width: 5.5em; }
+  input[type=checkbox] { accent-color: var(--line); }
+  [hidden] { display: none !important; }
+
+  .work { flex: 1; min-height: 0; display: flex; gap: 8px; }
+  main { flex: 1; min-width: 0; position: relative; overflow: hidden; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+
+  /* Per-viewport furniture, positioned by the lab script. */
+  .rule { position: absolute; background: var(--line); opacity: 0.45; pointer-events: none; }
+  .vlabel {
+    position: absolute; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; font-size: 12px; pointer-events: none;
+    padding: 1px 6px; background: rgba(219, 233, 250, 0.8); border-radius: 2px;
+  }
+  .scale {
+    position: absolute; color: var(--ink); pointer-events: none;
+    display: flex; align-items: center; gap: 6px; font-size: 11px;
+    padding: 1px 6px; background: rgba(219, 233, 250, 0.8); border-radius: 2px;
+  }
+  .scale .bar { height: 7px; border: 1px solid var(--line); border-top: none; border-bottom-width: 2px; }
+
+  aside {
+    width: 372px; flex: none; padding: 9px 11px; overflow-y: auto;
+    background: rgba(219, 233, 250, 0.92);
+  }
+  aside h2 {
+    font-size: 12px; margin: 12px 0 5px; letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1px solid var(--line); padding-bottom: 3px;
+  }
+  aside h2:first-child { margin-top: 0; }
+  #meta { color: var(--ink-dim); }
+  #meta b { color: var(--ink); }
+  #meta a { color: var(--line); }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 1px 0; white-space: nowrap; vertical-align: top; }
+  td.k { color: var(--ink-dim); padding-right: 8px; }
+  td.v { text-align: right; font-weight: 700; }
+  /* Free-text values (failure lists, timings) wrap inside the panel instead
+     of widening the table and pushing every other value out of view. */
+  td.v.wide { white-space: normal; word-break: break-word; }
+  td.d { text-align: right; padding-left: 8px; }
+  #specTable { font-size: 11.5px; }
+  .ok { color: var(--ok); }
+  .off { color: var(--off); font-weight: 700; }
+  #verdict { font-weight: 700; margin-top: 6px; }
+  #partToggles { display: flex; flex-direction: column; gap: 2px; }
+
+  /* Problems are part of the picture: headless review has no console. */
+  #problems {
+    position: absolute; left: 8px; right: 8px; bottom: 8px; margin: 0; padding: 6px 9px;
+    white-space: pre-wrap; word-break: break-word; max-height: 40%; overflow: auto;
+    color: #fff; background: rgba(160, 36, 28, 0.94); border-radius: 2px; font-weight: 700;
+  }
+  #problems:empty { display: none; }
+  #fatal {
+    z-index: 2;
+    position: absolute; inset: 0; margin: 0; padding: 28px 32px; overflow: auto;
+    white-space: pre-wrap; word-break: break-word;
+    color: var(--off); background: rgba(250, 238, 234, 0.97); font-size: 13px;
+  }
+  #fatal:empty { display: none; }
+  #fatal::before { content: 'ASSET FAILED TO LOAD\A\A'; font-weight: 700; letter-spacing: 0.08em; }
+
+  /* ui=0: nothing but the picture. */
+  body.bare { padding: 0; gap: 0; }
+  body.bare header, body.bare aside, body.bare .vlabel, body.bare .scale, body.bare .rule { display: none; }
+  body.bare main { border: none; background: none; }
+  body.bare .work { gap: 0; }
+</style>
+</head>
+<body>
+
+<header class="frame">
+  <h1>Asset lab</h1>
+  <label class="ctl">asset <select id="asset"></select></label>
+  <label class="ctl" id="seedCtl">seed <input type="number" id="seed" min="0" step="1" /></label>
+  <label class="ctl" id="schemeCtl">scheme <select id="scheme"></select></label>
+  <label class="ctl" id="liveryCtl">livery <select id="livery"></select></label>
+  <label class="ctl">variants <input type="number" id="variants" min="1" max="12" step="1" /></label>
+  <label class="ctl">view
+    <select id="view">
+      <option value="quad">quad</option>
+      <option value="hero">hero</option>
+      <option value="turntable">turntable</option>
+      <option value="sheet">sheet (8 yaws)</option>
+      <option value="front">front</option>
+      <option value="side">side</option>
+      <option value="top">top</option>
+      <option value="rear">rear</option>
+    </select>
+  </label>
+  <label class="ctl">bg
+    <select id="bg">
+      <option value="studio">studio</option>
+      <option value="blueprint">blueprint</option>
+      <option value="scene">scene</option>
+    </select>
+  </label>
+  <label class="ctl">debug
+    <select id="debug">
+      <option value="">lit</option>
+      <option value="albedo">albedo</option>
+      <option value="normal">normals</option>
+      <option value="shadow">shadow term</option>
+      <option value="ao">baked AO</option>
+      <option value="light">light on grey</option>
+      <option value="backface">back faces</option>
+    </select>
+  </label>
+  <label class="ctl" id="steerCtl">steer° <input type="number" id="steer" step="5" /></label>
+  <label class="ctl" id="bumpCtl">bump m <input type="number" id="bump" step="0.02" /></label>
+  <label class="ctl" id="runCtl"><input type="checkbox" id="run" /> run</label>
+  <label class="ctl"><input type="checkbox" id="wire" /> wire</label>
+  <label class="ctl"><input type="checkbox" id="spin" /> spin</label>
+</header>
+
+<div class="work">
+  <main class="frame" id="stage">
+    <canvas id="lab"></canvas>
+    <div id="chrome"></div>
+    <pre id="problems"></pre>
+    <pre id="fatal"></pre>
+  </main>
+  <aside class="frame">
+    <h2>Asset</h2>
+    <div id="meta"></div>
+    <h2>Specifications <span style="font-weight:400;letter-spacing:0;text-transform:none">(lengths in mm · measured ✓ spec (Δ))</span></h2>
+    <table id="specTable"></table>
+    <div id="verdict"></div>
+    <h2>Parts</h2>
+    <div id="partToggles"></div>
+  </aside>
+</div>
+
+<!-- The spec report as JSON, for headless checks (--dump-dom). -->
+<script type="application/json" id="lab-report"></script>
+<script type="module" src="/src/lab/assetLab.ts"></script>
+</body>
+</html>

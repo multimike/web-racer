@@ -35,4 +35,9 @@ export class CompositeInput implements InputProvider {
 
     return best;
   }
+
+  /** Dispose every provider that has listeners to remove. */
+  dispose(): void {
+    for (const provider of this.providers) provider.dispose?.();
+  }
 }

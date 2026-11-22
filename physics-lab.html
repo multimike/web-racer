@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Physics Lab — web-racer</title>
+<link rel="icon" href="data:," />
+<style>
+  html, body { height: 100%; margin: 0; background: #14181d; color: #d7dde4; }
+  body { font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; display: flex; flex-direction: column; }
+  header { padding: 8px 12px; background: #1d232a; border-bottom: 1px solid #2c343d; }
+  header b { color: #fff; }
+  #status { color: #8cc7ff; }
+  #help { color: #7d8894; }
+  canvas { display: none; width: 100%; height: 55vh; background: #223; outline: none; }
+  body.watch canvas { display: block; }
+  pre { margin: 0; padding: 8px 12px; white-space: pre; overflow: auto; }
+  #scorecard { color: #e8eef4; flex: 0 0 auto; max-height: 60vh; }
+  #result { color: #6f7b88; flex: 1 1 auto; font-size: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <b>Physics Lab</b> &nbsp; <span id="status">loading…</span><br />
+  <span id="help">?model=rigid|reference|… &amp;car=reef-rocket|riot-ram|comet-fox|neon-wasp|rb01 &amp;suite=all|name,name &amp;dt=1/60 &amp;seed=1 &amp;watch=1 &amp;series=0 &amp;tune=key:value,… &amp;driver=key:value,…</span>
+</header>
+<canvas id="lab"></canvas>
+<pre id="scorecard"></pre>
+<pre id="result"></pre>
+<script type="module" src="/src/lab/physicsLab.ts"></script>
+</body>
+</html>

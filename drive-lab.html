@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Drive Lab — web-racer</title>
+<link rel="icon" href="data:," />
+<style>
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #9cc6e8; }
+  canvas { display: block; width: 100vw; height: 100vh; outline: none; touch-action: none; }
+  #status, #result { display: none; }
+  body.debug #status { display: block; position: absolute; left: 10px; top: 8px; color: #fff; font: 14px monospace; white-space: pre-wrap; text-shadow: 0 1px 2px #000; }
+  #help {
+    position: absolute; left: 10px; bottom: 8px; margin: 0;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); pointer-events: none;
+  }
+  body.quiet #help { display: none; }
+  body.debug { background: #f0f; }
+  body.failed #status { display: block; position: absolute; left: 10px; top: 8px; right: 10px; color: #fff; background: rgba(120, 0, 0, 0.8); padding: 8px; font: 13px monospace; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<canvas id="drive"></canvas>
+<div id="status">loading…</div>
+<pre id="result"></pre>
+<pre id="help">W A S D / arrows / pad: drive · C / △: camera · R / ○: back to start
+?car=reef-rocket|neon-wasp|riot-ram|comet-fox &amp;vehicle=raycast|assist|hybrid|rigid &amp;livery=0 &amp;view=chase|high|xr
+&amp;cars=1..4 &amp;lod=0|1|2 &amp;shadows=off|1024|2048 &amp;auto=1 &amp;shot=1&amp;at=s &amp;report=1&amp;seconds=n</pre>
+<script type="module" src="/src/lab/driveLab.ts"></script>
+</body>
+</html>

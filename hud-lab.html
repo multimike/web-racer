@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>HUD Lab — web-racer</title>
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #8fc3ea; }
+
+  /* Stand-in for the game view, used when the vision image is not served
+     (bg=css forces it): sky, layered hills, grass, a dirt road running away
+     from the camera. Only there so the panels are judged over game-like
+     colours and contrast. */
+  #scene { position: fixed; inset: 0; overflow: hidden;
+    background: linear-gradient(#5aa9e6 0%, #9fd0f2 34%, #d7ecf7 47%, #a6d05a 47.2%, #8cc63f 100%); }
+  #scene i { position: absolute; display: block; }
+  #scene .hill-a { left: -10%; width: 70%; top: 28%; height: 40%; border-radius: 50%; background: #9bc7a4; }
+  #scene .hill-b { left: 35%; width: 85%; top: 31%; height: 40%; border-radius: 50%; background: #86bd7c; }
+  #scene .hill-c { left: -25%; width: 80%; top: 38%; height: 40%; border-radius: 50%; background: #79b854; }
+  #scene .grass { left: 0; right: 0; top: 47%; bottom: 0; background: linear-gradient(#9ccc4f, #7dbb37); }
+  #scene .road { left: 0; right: 0; top: 47%; bottom: 0;
+    background: linear-gradient(#b9a7c6 0%, #c2a58f 40%, #c98b55 100%);
+    clip-path: polygon(46% 0, 60% 0, 96% 100%, 14% 100%); }
+  #scene .kerb { left: 0; right: 0; top: 47%; bottom: 0; background: #efe6d2;
+    clip-path: polygon(44.6% 0, 61.4% 0, 100% 100%, 10% 100%); }
+  #scene .cloud { background: #fff; border-radius: 50%; opacity: 0.9;
+    box-shadow: 4vh 1vh 0 0.5vh #fff, -4vh 1.5vh 0 -0.3vh #fff; }
+
+  /* The vision paintings as backdrop. Default crops the middle 2/3 so the
+     HUD that is painted into the image falls outside the window; bg=vision
+     shows it 1:1 for direct alignment checks against that painted HUD. */
+  #shot { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; object-fit: fill; display: block; }
+  #shot.crop { transform-origin: 0 0; transform: translate(-19.54%, -19.81%) scale(1.4916); }
+
+  /* Lab furniture (ui=0 removes it). */
+  #panel { position: fixed; left: 12px; bottom: 12px; z-index: 20; width: 300px;
+    font: 11.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #e8f0f4;
+    background: rgba(16, 24, 32, 0.82); border-radius: 6px; padding: 8px 10px; }
+  #panel canvas { display: block; width: 300px; height: 300px; }
+  @media (max-height: 700px) { #panel canvas { width: 150px; height: 150px; } }
+  #panel pre { margin: 6px 0 0; white-space: pre-wrap; }
+  #panel nav { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 3px 8px; }
+  #panel a { color: #7fe3f0; text-decoration: none; }
+  #panel a:hover { text-decoration: underline; }
+  #panel kbd { color: #ffd76a; }
+  body.bare #panel { display: none; }
+
+  /* dev=1: boxes where the game's two dev overlays sit (same position and
+     size as main.ts's link bar and ui/TuningPanel.ts), to check the HUD
+     coexists with them. */
+  .devbox { position: fixed; z-index: 10; color: #fff; font: 12px monospace;
+    background: rgba(0, 0, 0, 0.55); border-radius: 4px; padding: 6px 10px; }
+  #dev-links { top: 10px; left: 10px; font-size: 13px; }
+  #dev-tuning { top: 10px; right: 10px; width: 230px; height: 392px; padding: 8px 12px; }
+
+  /* Shown in screenshots on purpose: headless review has no console. */
+  #fatal { position: fixed; inset: 0; z-index: 30; margin: 0; padding: 24px; white-space: pre-wrap;
+    font: 13px/1.4 ui-monospace, Menlo, monospace; color: #fff; background: rgba(150, 30, 24, 0.94); }
+  #fatal:empty { display: none; }
+</style>
+</head>
+<body>
+<div id="scene">
+  <i class="cloud" style="left:18%;top:9%;width:14vh;height:6vh"></i>
+  <i class="cloud" style="left:63%;top:15%;width:18vh;height:7vh"></i>
+  <i class="hill-a"></i><i class="hill-b"></i><i class="hill-c"></i>
+  <i class="grass"></i><i class="kerb"></i><i class="road"></i>
+</div>
+<img id="shot" alt="" />
+<div id="panel">
+  <canvas id="map" width="600" height="600"></canvas>
+  <pre id="readout"></pre>
+  <nav id="links"></nav>
+</div>
+<pre id="fatal"></pre>
+<script type="module" src="/src/lab/hudLab.ts"></script>
+</body>
+</html>
