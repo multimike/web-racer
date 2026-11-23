@@ -21,6 +21,12 @@ design packs beside it (cars, environment, buildings, ground materials).
   `npx vite build` emits `index.html` only (other `*.html` = dev-server
   labs); `vite.config.ts` holds ONLY `base: './'`, so a build also boots
   from a sub-folder. Node tools need Node ≥ 22.18.
+- HOSTING: public repo `multimike/web-racer`; every push to `main` runs
+  `.github/workflows/pages.yml` (`npm ci`, `npm run build`, publish `dist/`)
+  to GitHub Pages: https://multimike.github.io/web-racer/ . `README.md` is
+  the public front page (play link, controls, URL options, design-pack
+  links; its pictures are `docs/screenshot-*.jpg`): keep its controls and
+  options tables in step with the game.
 - `window.__game` (dev builds) = the `Game` of `createScene.ts`;
   `__look.config` = live lighting; `__game.dust[i].params` = per-car dust.
 
